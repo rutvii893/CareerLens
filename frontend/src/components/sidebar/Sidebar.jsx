@@ -15,7 +15,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="fixed left-0 top-[64px] w-64 h-[calc(100vh-64px)] bg-[#f9f9ff] border-r border-slate-200 hidden md:flex flex-col py-6 px-4">
+    <aside className="fixed left-0 top-[64px] w-64 h-[calc(100vh-64px)] bg-white border-r border-[#e2e8f0] hidden md:flex flex-col py-6 px-4">
       <div className="flex-1 flex flex-col gap-2">
         {links.map((link) => {
           const Icon = link.icon;
@@ -25,7 +25,7 @@ const Sidebar = () => {
               key={link.name} 
               to={link.path}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-inter text-sm font-medium transition-colors
-                ${isActive ? 'bg-[#e9edff] text-[#004ac6]' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+                ${isActive ? 'bg-blue-50 text-[#2563eb] border border-blue-100' : 'text-[#334155] hover:bg-slate-50 hover:text-[#0f172a]'}`}
             >
               <Icon size={18} />
               {link.name}
@@ -34,10 +34,10 @@ const Sidebar = () => {
         })}
       </div>
       
-      <div className="mt-auto">
+      <div className="mt-auto pt-4 border-t border-[#e2e8f0]">
         <Link 
           to="/profile"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg font-inter text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg font-inter text-sm font-medium text-[#334155] hover:bg-slate-50 hover:text-[#0f172a]"
         >
           <Settings size={18} />
           Profile & Settings
