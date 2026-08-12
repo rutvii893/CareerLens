@@ -1,8 +1,9 @@
-from pydantic import BaseSettings, Field, PostgresDsn
+from pydantic import Field, PostgresDsn
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: PostgresDsn = Field('=postgresql://postgres:989876@localhost:5432/careerlens', env='DATABASE_URL')
+    database_url: PostgresDsn = Field('postgresql://postgres:abtr@localhost:5432/careerlens', env='DATABASE_URL')
     jwt_secret_key: str = Field('a61aea93866c065cd93ea12a0a772e92882dd2e4f1f8d42af16a97c210c09b2a', env='JWT_SECRET_KEY')
     jwt_algorithm: str = Field('HS256', env='JWT_ALGORITHM')
     access_token_expire_minutes: int = Field(30, env='ACCESS_TOKEN_EXPIRE_MINUTES')
