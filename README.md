@@ -11,6 +11,8 @@ The implemented workflow is:
 3. The backend extracts and cleans resume text, detects skills and sections, calculates an ATS score, and stores the analysis.
 4. Job descriptions can be stored, skill-tagged, and compared with a user's resume.
 5. A user selects a career role, reviews missing skills, and generates a stored roadmap.
+6. The dashboard aggregates the persisted resume, job, career, roadmap, and interview signals.
+7. The user can ask the career coach questions and complete structured interview sessions.
 
 ## Current Implemented Features
 
@@ -25,7 +27,10 @@ The implemented workflow is:
 - PostgreSQL persistence for resume analyses, jobs, job skills, job matches, career roles, role skills, and roadmaps.
 - Job description creation and resume-to-job matching.
 - Career role selection, skill-gap analysis, and personalized roadmap generation.
-- React pages connected to real job, career, and roadmap APIs.
+- AI career coach integration through a backend-only Gemini service with deterministic fallback.
+- Role-based interview question generation, structured answer evaluation, and PostgreSQL persistence.
+- PostgreSQL-backed dashboard readiness, resume, job, career, roadmap, and interview metrics.
+- React pages connected to real auth, resume, job, career, coach, interview, skills, and dashboard APIs.
 - Backend integration tests and frontend production build validation.
 
 ## Resume Intelligence
@@ -53,7 +58,7 @@ The current pipeline is intentionally deterministic where possible:
 5. Calculate section, keyword, content, and overall ATS scores.
 6. Attempt to generate a normalized `all-MiniLM-L6-v2` embedding.
 
-Sentence Transformers is optional at runtime. It is declared in `backend/requirements.txt`, but if the package or model is unavailable, embedding fields remain empty and deterministic skill-based scoring continues to work. No Gemini, LLM, NLP model training, or generative AI integration is implemented.
+Sentence Transformers is optional at runtime. It is declared in `backend/requirements.txt`, but if the package or model is unavailable, embedding fields remain empty and deterministic skill-based scoring continues to work. Gemini is available only through the backend career-coach service and requires `GEMINI_API_KEY`; without it, the coach returns a context-aware deterministic fallback. No model training is implemented.
 
 ## Job Intelligence
 
@@ -89,6 +94,16 @@ Additional profiles can be created through the career roles API. Role matching i
 
 The roadmap service groups missing skills into ordered phases and stores the result with the authenticated user, resume, and selected role. Saved roadmaps can be retrieved later for the same user and resume. Roadmap completion tracking is not implemented yet.
 
+## AI Career Coach and Interview Intelligence
+
+The career coach accepts a question and builds context from the authenticated user's actual resume, extracted skills, target role, recorded skill gaps, and stored roadmap. Gemini calls are made only by the backend; the API key is never sent to React. When Gemini is unavailable, the response uses the available CareerLens context and identifies the fallback provider.
+
+Interview sessions generate technical and behavioral questions from the user's resume and target role. Submitted answers are evaluated against structured expected points and stored with score, strengths, missing points, and improvement feedback.
+
+## Final Dashboard
+
+`GET /api/v1/users/me/dashboard` aggregates the latest authenticated user's ATS score, resume improvement, job matching, career gaps, roadmap progress, interview performance, recommended jobs, and readiness component scores.
+
 ## PostgreSQL Data Persistence
 
 SQLAlchemy models currently cover:
@@ -101,6 +116,7 @@ SQLAlchemy models currently cover:
 - `JobMatch`
 - `Application`
 - `InterviewSession`
+- interview answers and feedback stored as JSON on `InterviewSession`
 - `CareerRole`
 - `CareerRoleSkill`
 - `CareerRoadmap`
@@ -141,9 +157,10 @@ Protected endpoints require `Authorization: Bearer <token>`.
 | POST | `/api/v1/career/analyze` | Analyze resume skills against a role |
 | POST | `/api/v1/career/roadmap` | Generate and store a roadmap |
 | GET | `/api/v1/career/roadmap?resumeId={id}` | Retrieve the latest stored roadmap |
-| POST | `/api/v1/interview/start` | Create an interview session |
-| POST | `/api/v1/interview/evaluate` | Placeholder answer evaluation endpoint |
-| GET | `/api/v1/interview/{session_id}` | Get an interview session |
+| POST | `/api/v1/career/coach/ask` | Ask a context-aware career question |
+| POST | `/api/v1/interview/start` | Generate and create an interview session |
+| POST | `/api/v1/interview/evaluate` | Evaluate and store an interview answer |
+| GET | `/api/v1/interview/{session_id}` | Get an interview session with answers and feedback |
 
 ## Project Structure
 
@@ -162,7 +179,10 @@ CareerLens/
 │   ├── services/
 │   │   ├── resume_intelligence.py
 │   │   ├── job_intelligence.py
-│   │   └── career_intelligence.py
+│   │   ├── career_intelligence.py
+│   │   ├── career_coach.py
+│   │   ├── gemini_service.py
+│   │   └── interview_intelligence.py
 │   └── tests/
 ├── frontend/
 │   ├── src/App.jsx
@@ -218,6 +238,8 @@ The frontend normally runs at `http://localhost:5173`.
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | JWT lifetime in minutes |
 | `FRONTEND_URL` | Allowed CORS origin |
 | `UPLOAD_DIR` | Local resume storage directory |
+| `GEMINI_API_KEY` | Optional backend-only Gemini API key |
+| `GEMINI_MODEL` | Gemini model name; defaults to `gemini-2.0-flash` |
 
 ### Frontend (`frontend/.env`)
 
@@ -232,7 +254,7 @@ $env:PYTHONPATH = (Get-Location).Path
 backend\.venv\Scripts\python.exe -m pytest backend/tests -q
 ```
 
-The current backend suite covers authentication, protected user access, resume intelligence, authenticated resume upload and analysis, job matching, career gap analysis, and roadmap persistence. The latest run passed 7 tests.
+The current backend suite covers authentication, protected user access, resume intelligence, authenticated resume upload and analysis, job matching, career gap analysis, roadmap persistence, dashboard aggregation, interview intelligence, and career-coach fallback behavior. The latest run passed 8 tests.
 
 The frontend production build is verified with:
 
@@ -244,10 +266,11 @@ npm run build
 ## Known Limitations
 
 - Sentence Transformer embeddings require the declared dependency and a locally available/downloadable model; otherwise deterministic skill matching is used.
+- Gemini coaching requires `GEMINI_API_KEY`; deterministic context-aware fallback is used when it is absent or unavailable.
 - ATS scoring is deterministic and catalog-based; it is not an LLM or industry-certified ATS implementation.
 - Skill extraction only recognizes the maintained catalog in `resume_intelligence.py`.
 - Job listings are user-created or seeded database records; external job-board ingestion is not implemented.
-- Interview answer evaluation remains a placeholder and does not use AI grading.
+- Interview evaluation is structured and deterministic; it is not an LLM-based grading system.
 - Application workflows, roadmap completion tracking, active-resume selection, and role-based authorization are incomplete.
 - Database schema setup uses startup table creation and compatibility alterations; Alembic migrations are not implemented.
 - Resume files are stored locally under `UPLOAD_DIR`; cloud object storage and production file scanning are not implemented.

@@ -1,88 +1,26 @@
 import React from 'react';
-import { Target, FileText, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, BriefcaseBusiness, FileText, LoaderCircle, Map, MessageSquare, Target } from 'lucide-react';
+import { userService } from '../services/userService';
+
+const Metric = ({ label, value, icon: Icon, tone }) => <div className="bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm flex items-center justify-between"><div><p className="text-[#64748b] font-inter text-sm font-medium mb-1">{label}</p><h2 className={`text-4xl font-bold font-jakarta ${tone}`}>{value}%</h2></div><div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center"><Icon className="w-8 h-8" /></div></div>;
 
 const Dashboard = () => {
-  return (
-    <div className="p-6 md:p-8 max-w-[1280px] mx-auto w-full">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold font-jakarta text-[#0f172a] mb-2">Welcome back!</h1>
-        <p className="text-[#64748b] font-inter">Here is your daily career intelligence overview.</p>
-      </div>
+  const [metrics, setMetrics] = React.useState(null);
+  const [error, setError] = React.useState('');
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-[#64748b] font-inter text-sm font-medium mb-1">Career Readiness Score</p>
-            <h2 className="text-4xl font-bold font-jakarta text-[#2563eb]">72%</h2>
-          </div>
-          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
-            <Target className="text-[#2563eb] w-8 h-8" />
-          </div>
-        </div>
+  React.useEffect(() => {
+    userService.getDashboardMetrics().then(setMetrics).catch((requestError) => setError(requestError.response?.data?.detail || 'Dashboard data could not be loaded.'));
+  }, []);
 
-        <div className="bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-[#64748b] font-inter text-sm font-medium mb-1">Resume ATS Score</p>
-            <h2 className="text-4xl font-bold font-jakarta text-[#7c3aed]">78%</h2>
-          </div>
-          <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center">
-            <FileText className="text-[#7c3aed] w-8 h-8" />
-          </div>
-        </div>
-      </div>
+  if (error) return <div className="p-6 md:p-8 max-w-[1280px] mx-auto w-full"><div className="bg-red-50 border border-red-100 rounded-2xl p-5 text-red-700 flex items-center gap-3"><AlertCircle />{error}</div></div>;
+  if (!metrics) return <div className="p-6 md:p-8 max-w-[1280px] mx-auto w-full min-h-64 grid place-items-center"><LoaderCircle className="animate-spin text-[#2563eb]" /></div>;
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm">
-          <h3 className="text-lg font-bold font-jakarta text-[#0f172a] mb-6">Skill Progress</h3>
-          <div className="space-y-5">
-            {[
-              { name: 'React', progress: 85, color: 'bg-blue-500' },
-              { name: 'JavaScript', progress: 80, color: 'bg-blue-400' },
-              { name: 'Python', progress: 65, color: 'bg-purple-500' },
-              { name: 'SQL', progress: 50, color: 'bg-orange-400' },
-              { name: 'DSA', progress: 40, color: 'bg-slate-400' },
-            ].map(skill => (
-              <div key={skill.name}>
-                <div className="flex justify-between text-sm font-medium mb-2">
-                  <span className="text-[#334155]">{skill.name}</span>
-                  <span className="text-[#64748b]">{skill.progress}%</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-2">
-                  <div className={`${skill.color} h-2 rounded-full`} style={{ width: `${skill.progress}%` }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+  const roadmap = metrics.roadmap_progress || {};
+  const interview = metrics.interview_performance || {};
+  const overview = metrics.career_readiness_overview || {};
+  const hasResume = Boolean(metrics.active_resume_id);
 
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm">
-          <h3 className="text-lg font-bold font-jakarta text-[#0f172a] mb-6">Recommended Jobs</h3>
-          <div className="space-y-4">
-            {[
-              { title: 'Frontend Developer', skills: ['React', 'JavaScript', 'CSS'], match: 92 },
-              { title: 'Full Stack Developer', skills: ['React', 'Node.js', 'SQL'], match: 78 },
-              { title: 'Backend Developer', skills: ['Python', 'Django', 'SQL'], match: 65 },
-            ].map((job, i) => (
-              <div key={i} className="p-4 border border-[#e2e8f0] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#2563eb] transition-colors cursor-pointer">
-                <div>
-                  <h4 className="font-bold text-[#0f172a] mb-1">{job.title}</h4>
-                  <p className="text-sm text-[#64748b] font-inter flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#16a34a]" />
-                    Required: {job.skills.join(', ')}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="inline-block px-3 py-1 bg-green-50 text-[#16a34a] rounded-full text-sm font-semibold">
-                    {job.match}% Match
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="p-6 md:p-8 max-w-[1280px] mx-auto w-full"><div className="mb-8"><h1 className="text-3xl font-bold font-jakarta text-[#0f172a] mb-2">Career readiness overview</h1><p className="text-[#64748b] font-inter">Your current progress across resume, jobs, skills, roadmap, and interviews.</p></div><div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8"><Metric label="Career Readiness" value={Math.round(metrics.readiness_score)} icon={Target} tone="text-[#2563eb]" /><Metric label="Resume ATS Score" value={Math.round(metrics.recent_ats_score)} icon={FileText} tone="text-[#7c3aed]" /><Metric label="Best Job Match" value={Math.round(metrics.job_match_percentage)} icon={BriefcaseBusiness} tone="text-[#16a34a]" /><Metric label="Interview Performance" value={Math.round(interview.average_score || 0)} icon={MessageSquare} tone="text-[#e26d3d]" /></div><div className="grid grid-cols-1 lg:grid-cols-3 gap-6"><section className="lg:col-span-1 bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm"><h3 className="text-lg font-bold font-jakarta text-[#0f172a] mb-5">Resume improvement</h3>{metrics.resume_improvement.length ? <ul className="space-y-3 text-sm text-[#334155]">{metrics.resume_improvement.slice(0, 5).map((item) => <li className="flex gap-2" key={item}><FileText className="w-4 h-4 text-[#e26d3d] shrink-0" />{item}</li>)}</ul> : <p className="text-sm text-[#64748b]">{hasResume ? 'No improvement suggestions recorded.' : 'Upload a resume to see improvement suggestions.'}</p>}<h3 className="text-lg font-bold font-jakarta text-[#0f172a] mt-8 mb-4">Detected skills</h3><div className="flex flex-wrap gap-2">{metrics.extracted_skills.length ? metrics.extracted_skills.map((skill) => <span className="px-3 py-1 bg-slate-100 rounded-full text-xs" key={skill}>{skill}</span>) : <p className="text-sm text-[#64748b]">No skills recorded.</p>}</div></section><section className="lg:col-span-1 bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm"><h3 className="text-lg font-bold font-jakarta text-[#0f172a] mb-5">Job match skills</h3><p className="text-sm text-[#16a34a] mb-3">Matching: {metrics.matching_skills.length ? metrics.matching_skills.join(', ') : 'None recorded'}</p><p className="text-sm text-[#b45309]">Missing: {metrics.missing_skills.length ? metrics.missing_skills.join(', ') : 'None recorded'}</p><h3 className="text-lg font-bold font-jakarta text-[#0f172a] mt-8 mb-4">Career skill gap</h3><div className="flex flex-wrap gap-2">{metrics.career_skill_gap.length ? metrics.career_skill_gap.map((skill) => <span className="px-3 py-1 bg-orange-50 text-[#b45309] rounded-full text-xs" key={skill}>{skill}</span>) : <p className="text-sm text-[#64748b]">No career gaps recorded.</p>}</div></section><section className="lg:col-span-1 bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm"><h3 className="text-lg font-bold font-jakarta text-[#0f172a] mb-5">Roadmap progress</h3><div className="flex justify-between text-sm mb-2"><span>{roadmap.target_role || 'No target role'}</span><strong>{Math.round(roadmap.percentage || 0)}%</strong></div><div className="w-full bg-slate-100 rounded-full h-2"><div className="bg-[#2563eb] h-2 rounded-full" style={{ width: `${roadmap.percentage || 0}%` }} /></div><p className="text-xs text-[#64748b] mt-3">{roadmap.completed_phases || 0} of {roadmap.total_phases || 0} phases completed.</p><h3 className="text-lg font-bold font-jakarta text-[#0f172a] mt-8 mb-4">Readiness components</h3><div className="space-y-3 text-sm">{[['ATS', overview.ats_score], ['Job matching', overview.job_match_score], ['Career skills', overview.career_skill_score], ['Roadmap', overview.roadmap_score], ['Interviews', overview.interview_score]].map(([label, value]) => <div className="flex justify-between" key={label}><span className="text-[#64748b]">{label}</span><strong>{Math.round(value || 0)}%</strong></div>)}</div></section></div><section className="bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm mt-6"><h3 className="text-lg font-bold font-jakarta text-[#0f172a] mb-5">Recommended jobs</h3>{metrics.recommended_jobs.length ? <div className="grid gap-3 md:grid-cols-2">{metrics.recommended_jobs.map((job) => <div className="p-4 border border-[#e2e8f0] rounded-xl flex justify-between" key={job.id}><div><strong>{job.title}</strong><p className="text-sm text-[#64748b]">{job.company || 'Stored job'}</p></div><span className="text-[#16a34a] font-bold">{Math.round(job.match_score)}%</span></div>)}</div> : <p className="text-sm text-[#64748b]">No job matches recorded yet.</p>}</section></div>;
 };
 
 export default Dashboard;

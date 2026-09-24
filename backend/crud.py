@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from . import models, schemas
@@ -62,7 +62,7 @@ def get_latest_ats_result(db: Session, user_id: int) -> Optional[models.ResumeAn
         select(models.ResumeAnalysis)
         .join(models.Resume)
         .where(models.Resume.user_id == user_id)
-        .order_by(models.ResumeAnalysis.created_at.desc())
+        .order_by(desc(models.ResumeAnalysis.created_at))
     )
 
 
@@ -218,7 +218,7 @@ def get_latest_career_roadmap(db: Session, user_id: int, resume_id: Optional[int
     query = select(models.CareerRoadmap).where(models.CareerRoadmap.user_id == user_id)
     if resume_id is not None:
         query = query.where(models.CareerRoadmap.resume_id == resume_id)
-    return db.scalar(query.order_by(models.CareerRoadmap.updated_at.desc()))
+    return db.scalar(query.order_by(desc(models.CareerRoadmap.updated_at)))
 
 
 def create_interview_session(
@@ -264,13 +264,64 @@ def save_interview_evaluation(db: Session, session: models.InterviewSession, que
 
 def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics:
     latest_ats = get_latest_ats_result(db, user_id)
-    resume = None
-    if latest_ats is not None:
-        resume = latest_ats.resume
+    resume = latest_ats.resume if latest_ats is not None else db.scalar(
+        select(models.Resume)
+        .where(models.Resume.user_id == user_id)
+        .order_by(desc(models.Resume.uploaded_at))
+    )
+    resume_id = resume.id if resume else None
+    matches = []
+    if resume_id is not None:
+        matches = db.scalars(
+            select(models.JobMatch)
+            .where(models.JobMatch.resume_id == resume_id)
+            .order_by(desc(models.JobMatch.match_score))
+        ).all()
+    top_match = matches[0] if matches else None
+    roadmap = get_latest_career_roadmap(db, user_id, resume_id)
+    interviews = db.scalars(
+        select(models.InterviewSession)
+        .where(models.InterviewSession.user_id == user_id)
+        .order_by(desc(models.InterviewSession.updated_at))
+    ).all()
+    scored_interviews = [session.score for session in interviews if session.score is not None]
+    interview_average = round(sum(scored_interviews) / len(scored_interviews), 2) if scored_interviews else 0.0
+    roadmap_items = roadmap.roadmap if roadmap else []
+    completed_phases = sum(1 for item in roadmap_items if item.get('status') in {'completed', 'done'})
+    roadmap_percentage = round((completed_phases / len(roadmap_items)) * 100, 2) if roadmap_items else 0.0
+    career_gap = list(roadmap.missing_skills or []) if roadmap else []
+    career_score = max(0.0, 100.0 - (len(career_gap) * 15.0)) if roadmap else 0.0
+    ats_score = float(latest_ats.overall_score or 0.0) if latest_ats else 0.0
+    job_score = float(top_match.match_score or 0.0) if top_match else 0.0
+    readiness = round((ats_score * 0.35) + (job_score * 0.20) + (career_score * 0.20) + (roadmap_percentage * 0.10) + (interview_average * 0.15), 2)
     return schemas.DashboardMetrics(
-        readiness_score=0.0,
-        recent_ats_score=latest_ats.overall_score if latest_ats else 0.0,
-        active_resume_id=resume.id if resume else None,
+        readiness_score=readiness,
+        recent_ats_score=ats_score,
+        active_resume_id=resume_id,
+        extracted_skills=list(latest_ats.extracted_skills or []) if latest_ats else [],
+        resume_improvement=list(latest_ats.recommendations or []) if latest_ats else [],
+        job_match_percentage=job_score,
+        matching_skills=list(top_match.matched_skills or []) if top_match else [],
+        missing_skills=list(top_match.missing_skills or []) if top_match else [],
+        recommended_jobs=[
+            {'id': match.job.id, 'title': match.job.title, 'company': match.job.company, 'match_score': match.match_score}
+            for match in matches[:5]
+        ],
+        career_skill_gap=career_gap,
+        roadmap_progress={
+            'target_role': roadmap.target_role if roadmap else None,
+            'completed_phases': completed_phases,
+            'total_phases': len(roadmap_items),
+            'percentage': roadmap_percentage,
+        },
+        interview_performance={'average_score': interview_average, 'session_count': len(interviews)},
+        career_readiness_overview={
+            'ats_score': ats_score,
+            'job_match_score': job_score,
+            'career_skill_score': career_score,
+            'roadmap_score': roadmap_percentage,
+            'interview_score': interview_average,
+        },
         recent_applications=[],
-        recent_interviews=[],
+        recent_interviews=[{'id': session.id, 'target_role': session.target_role, 'score': session.score} for session in interviews[:5]],
     )

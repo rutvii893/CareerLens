@@ -81,3 +81,12 @@ def test_job_and_career_intelligence_flow():
     saved = client.get(f'/api/v1/career/roadmap?resumeId={resume_id}', headers=headers)
     assert saved.status_code == 200
     assert saved.json()['id'] == roadmap.json()['id']
+
+    dashboard = client.get('/api/v1/users/me/dashboard', headers=headers)
+    assert dashboard.status_code == 200
+    dashboard_data = dashboard.json()
+    assert dashboard_data['active_resume_id'] == resume_id
+    assert dashboard_data['recent_ats_score'] > 0
+    assert dashboard_data['job_match_percentage'] > 0
+    assert 'Docker' in dashboard_data['missing_skills']
+    assert 'Docker' in dashboard_data['career_skill_gap']

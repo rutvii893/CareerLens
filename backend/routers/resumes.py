@@ -1,4 +1,5 @@
 import os
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -8,6 +9,7 @@ from ..dependencies import get_current_user, get_db
 from ..services.resume_intelligence import ResumeIntelligenceError, analyze_resume_file
 
 router = APIRouter(prefix='/resumes', tags=['resumes'])
+MAX_RESUME_BYTES = 10 * 1024 * 1024
 
 
 @router.post('/upload', response_model=schemas.ResumeUploadResponse, status_code=status.HTTP_201_CREATED)
@@ -18,12 +20,16 @@ def upload_resume(file: UploadFile = File(...), db: Session = Depends(get_db), c
     upload_root = os.path.abspath(config.settings.upload_dir)
     user_folder = os.path.join(upload_root, str(current_user.id))
     os.makedirs(user_folder, exist_ok=True)
-    safe_filename = os.path.basename(file.filename or 'resume')
-    destination_path = os.path.join(user_folder, safe_filename)
+    original_filename = os.path.basename(file.filename or 'resume')
+    stored_filename = f'{uuid4().hex}_{original_filename}'
+    destination_path = os.path.join(user_folder, stored_filename)
+    file_bytes = file.file.read(MAX_RESUME_BYTES + 1)
+    if len(file_bytes) > MAX_RESUME_BYTES:
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail='Resume file must be 10 MB or smaller')
     with open(destination_path, 'wb') as buffer:
-        buffer.write(file.file.read())
+        buffer.write(file_bytes)
 
-    resume = crud.create_resume(db, current_user.id, safe_filename, destination_path)
+    resume = crud.create_resume(db, current_user.id, original_filename, destination_path)
     try:
         analysis = analyze_resume_file(destination_path, file.content_type)
     except ResumeIntelligenceError as exc:
