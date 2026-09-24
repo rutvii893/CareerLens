@@ -92,7 +92,9 @@ const fragmentShader = `
       color *= fade;
     }
 
-    gl_FragColor = vec4(color, 1.0); // No alpha background, rely on color addition or just output
+    // Set alpha based on lines so the background remains fully transparent
+    float alpha = lines * uBrightness * 5.0; 
+    gl_FragColor = vec4(color, alpha);
   }
 `;
 
