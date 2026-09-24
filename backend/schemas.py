@@ -108,18 +108,79 @@ class MatchingRequest(BaseModel):
     job_id: Optional[int] = None
 
 
+class JobCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    company: Optional[str] = Field(None, max_length=255)
+    description: str = Field(..., min_length=20)
+    location: Optional[str] = Field(None, max_length=128)
+
+
+class JobRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    company: Optional[str]
+    description: Optional[str]
+    location: Optional[str]
+    required_skills: List[str] = []
+    posted_at: datetime
+
+
+class JobMatchRead(BaseModel):
+    job: JobRead
+    match_score: float
+    similarity_score: Optional[float] = None
+    matched_skills: List[str] = []
+    missing_skills: List[str] = []
+    embedding_model: Optional[str] = None
+
+
 class MatchingResponse(BaseModel):
     match_score: float
     matched_skills: List[str] = []
     missing_skills: List[str] = []
+    similarity_score: Optional[float] = None
+    embedding_model: Optional[str] = None
 
 
 class CareerAnalyzeRequest(BaseModel):
-    resume_id: int
-    target_role: str
+    resume_id: Optional[int] = None
+    target_role: str = Field(..., min_length=2, max_length=255)
+    role_id: Optional[int] = None
+
+
+class CareerRoleRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: Optional[str]
+    required_skills: List[str] = []
+
+
+class CareerRoleCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=255)
+    description: Optional[str] = None
+    required_skills: List[str] = Field(..., min_length=1)
+
+
+class CareerAnalysisResponse(BaseModel):
+    role: CareerRoleRead
+    resume_id: Optional[int]
+    current_skills: List[str] = []
+    missing_skills: List[str] = []
+    recommended_skills: List[str] = []
+    similarity_score: Optional[float] = None
+    embedding_model: Optional[str] = None
 
 
 class CareerRoadmapResponse(BaseModel):
+    id: Optional[int] = None
+    role: Optional[CareerRoleRead] = None
+    resume_id: Optional[int] = None
+    missing_skills: List[str] = []
+    recommended_skills: List[str] = []
     roadmap: List[dict] = []
 
 
