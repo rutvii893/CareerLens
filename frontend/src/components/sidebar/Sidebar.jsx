@@ -1,22 +1,32 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Briefcase, GraduationCap, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, FileText, Briefcase, GraduationCap, MessageSquareText, UserRound, X, Map } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ open = false, onClose }) => {
   const location = useLocation();
 
   const links = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'My Skills', path: '/skills', icon: GraduationCap },
+    { name: 'My skills', path: '/skills', icon: GraduationCap },
     { name: 'Resume', path: '/resume', icon: FileText },
-    { name: 'Jobs', path: '/jobs', icon: Briefcase },
-    { name: 'Career Coach', path: '/career', icon: Users },
-    { name: 'Interview', path: '/interview', icon: Users },
+    { name: 'Job matching', path: '/jobs', icon: Briefcase },
+    { name: 'Roadmap', path: '/career/roadmap', icon: Map },
+    { name: 'Interview', path: '/interview', icon: MessageSquareText },
   ];
 
   return (
-    <aside className="fixed left-0 top-[64px] w-64 h-[calc(100vh-64px)] bg-[#f9f9ff] border-r border-slate-200 hidden md:flex flex-col py-6 px-4">
-      <div className="flex-1 flex flex-col gap-2">
+    <>
+      {open && <button className="mobile-backdrop md:hidden" onClick={onClose} aria-label="Close navigation" />}
+      <aside className={`sidebar ${open ? 'sidebar-open' : ''}`}>
+        <div className="flex items-center justify-between mb-7 px-3 md:hidden">
+          <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Workspace</span>
+          <button type="button" onClick={onClose} className="icon-button" aria-label="Close navigation"><X size={18} /></button>
+        </div>
+        <div className="flex items-center gap-2 px-3 mb-7">
+          <span className="eyebrow-dot" />
+          <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Student workspace</span>
+        </div>
+        <div className="flex-1 flex flex-col gap-1.5">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = location.pathname.startsWith(link.path);
@@ -24,26 +34,27 @@ const Sidebar = () => {
             <Link 
               key={link.name} 
               to={link.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-inter text-sm font-medium transition-colors
-                ${isActive ? 'bg-[#e9edff] text-[#004ac6]' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+              onClick={onClose}
+              className={`nav-item ${isActive ? 'nav-item-active' : ''}`}
             >
               <Icon size={18} />
               {link.name}
             </Link>
           );
         })}
-      </div>
-      
-      <div className="mt-auto">
+        </div>
+        <div className="mt-auto pt-5 border-t border-slate-200/80">
         <Link 
           to="/profile"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg font-inter text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          onClick={onClose}
+          className={`nav-item ${location.pathname === '/profile' ? 'nav-item-active' : ''}`}
         >
-          <Settings size={18} />
-          Profile & Settings
+          <UserRound size={18} />
+          Profile
         </Link>
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </>
   );
 };
 

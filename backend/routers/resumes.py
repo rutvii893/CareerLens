@@ -1,9 +1,11 @@
 import os
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
-from .. import crud, config, schemas
+from .. import config, crud, schemas
 from ..dependencies import get_current_user, get_db
+from ..services.resume_intelligence import ResumeIntelligenceError, analyze_resume_file
 
 router = APIRouter(prefix='/resumes', tags=['resumes'])
 
@@ -16,12 +18,22 @@ def upload_resume(file: UploadFile = File(...), db: Session = Depends(get_db), c
     upload_root = os.path.abspath(config.settings.upload_dir)
     user_folder = os.path.join(upload_root, str(current_user.id))
     os.makedirs(user_folder, exist_ok=True)
-    destination_path = os.path.join(user_folder, file.filename)
-
+    safe_filename = os.path.basename(file.filename or 'resume')
+    destination_path = os.path.join(user_folder, safe_filename)
     with open(destination_path, 'wb') as buffer:
         buffer.write(file.file.read())
 
-    resume = crud.create_resume(db, current_user.id, file.filename, destination_path)
+    resume = crud.create_resume(db, current_user.id, safe_filename, destination_path)
+    try:
+        analysis = analyze_resume_file(destination_path, file.content_type)
+    except ResumeIntelligenceError as exc:
+        resume.status = 'extraction_failed'
+        db.add(resume)
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+    crud.update_resume_analysis_text(db, resume, analysis['extracted_text'])
+    crud.create_ats_result(db, resume.id, analysis)
     return schemas.ResumeUploadResponse(id=resume.id, filename=resume.filename, status=resume.status)
 
 
@@ -43,9 +55,7 @@ def get_resume_analysis(resume_id: int, db: Session = Depends(get_db), current_u
     resume = crud.get_resume(db, resume_id)
     if not resume or resume.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found')
-    return schemas.ResumeAnalysisResponse(
-        overall_score=0.0,
-        keyword_score=0.0,
-        missing_keywords=[],
-        recommendations=[],
-    )
+    analysis = resume.ats_results[-1] if resume.ats_results else None
+    if analysis is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume analysis not found')
+    return schemas.ResumeAnalysisResponse.model_validate(analysis, from_attributes=True)

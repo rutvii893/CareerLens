@@ -1,14 +1,9 @@
 import React from 'react';
-import GlassCard from '../components/common/GlassCard';
+import { Check, Circle, Flag, ArrowRight } from 'lucide-react';
 
 const CareerRoadmap = () => {
   return (
-    <div className="p-6 max-w-[1280px] mx-auto w-full">
-      <GlassCard>
-        <h1 className="text-2xl font-bold font-jakarta text-[#2563eb] mb-4">CareerRoadmap</h1>
-        <p className="text-slate-600 font-inter">This page is ready for real API data integration.</p>
-      </GlassCard>
-    </div>
+    <div className="page-wrap"><div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-end mb-8"><div><span className="eyebrow">Career roadmap</span><h1 className="page-title">Your path to product design.</h1><p className="muted mt-2">A focused 12-week plan built around the skills you want next.</p></div><button className="button button-primary">Edit target role <ArrowRight size={16} /></button></div><div className="surface surface-pad mb-5"><div className="flex justify-between items-center mb-3"><div><span className="section-label">Roadmap progress</span><p className="muted text-sm mt-1">Week 4 of 12</p></div><strong className="font-display text-xl">33%</strong></div><div className="progress-track"><div className="progress-fill w-1/3" /></div></div><div className="grid gap-4">{[['01','Foundation and positioning','Weeks 1–3','Build a sharper portfolio story and define your target role.',true],['02','Systems thinking','Weeks 4–7','Practice constraints, flows, and decisions through one focused case study.',false],['03','Interview confidence','Weeks 8–12','Turn your strongest work into clear, structured interview stories.',false]].map(([number,title,period,description,done]) => <article className="surface surface-pad flex gap-5" key={number}><div className={`grid place-items-center shrink-0 w-11 h-11 rounded-xl ${done ? 'bg-[#132d5c] text-white' : 'bg-[#eef2f7] text-slate-500'}`}>{done ? <Check size={20} /> : <Circle size={19} />}</div><div className="flex-1"><div className="flex flex-wrap justify-between gap-2"><div><span className="eyebrow">Phase {number}</span><h2 className="font-display text-xl font-bold mt-1">{title}</h2></div><span className="tag">{period}</span></div><p className="muted text-sm mt-3 max-w-2xl">{description}</p><div className="flex items-center gap-2 mt-5 text-xs font-bold text-[#e26d3d]"><Flag size={14} /> {done ? 'Completed' : 'Up next'}</div></div></article>)}</div></div>
   );
 };
 
