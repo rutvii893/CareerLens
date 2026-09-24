@@ -103,13 +103,17 @@ def create_job_match(
     match_score: float = 0.0,
     matched_skills: Optional[list[str]] = None,
     missing_skills: Optional[list[str]] = None,
+    similarity_score: Optional[float] = None,
+    embedding_model: Optional[str] = None,
 ) -> models.JobMatch:
     match = models.JobMatch(
         resume_id=resume_id,
         job_id=job_id,
         match_score=match_score,
+        similarity_score=similarity_score,
         matched_skills=matched_skills or [],
         missing_skills=missing_skills or [],
+        embedding_model=embedding_model,
     )
     db.add(match)
     db.commit()
@@ -123,17 +127,98 @@ def create_career_roadmap(
     target_role: str,
     resume_id: Optional[int] = None,
     roadmap: Optional[list[dict]] = None,
+    role_id: Optional[int] = None,
+    missing_skills: Optional[list[str]] = None,
+    recommended_skills: Optional[list[str]] = None,
 ) -> models.CareerRoadmap:
     career_roadmap = models.CareerRoadmap(
         user_id=user_id,
         resume_id=resume_id,
         target_role=target_role,
+        role_id=role_id,
         roadmap=roadmap or [],
+        missing_skills=missing_skills or [],
+        recommended_skills=recommended_skills or [],
     )
     db.add(career_roadmap)
     db.commit()
     db.refresh(career_roadmap)
     return career_roadmap
+
+
+def create_job(
+    db: Session,
+    owner_user_id: int,
+    job_data: schemas.JobCreate,
+    intelligence: dict,
+) -> models.Job:
+    job = models.Job(
+        owner_user_id=owner_user_id,
+        title=job_data.title.strip(),
+        company=job_data.company.strip() if job_data.company else None,
+        description=intelligence['description'],
+        location=job_data.location.strip() if job_data.location else None,
+        required_skills=intelligence['required_skills'],
+        embedding=intelligence['embedding'],
+        embedding_model=intelligence['embedding_model'],
+    )
+    job.skills = [models.JobSkill(skill_name=skill) for skill in intelligence['required_skills']]
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+    return job
+
+
+def list_jobs(db: Session, owner_user_id: int) -> list[models.Job]:
+    return db.scalars(
+        select(models.Job).where(
+            (models.Job.owner_user_id.is_(None)) | (models.Job.owner_user_id == owner_user_id)
+        ).order_by(models.Job.posted_at.desc())
+    ).all()
+
+
+def get_job_match(db: Session, resume_id: int, job_id: int) -> Optional[models.JobMatch]:
+    return db.scalar(
+        select(models.JobMatch).where(
+            models.JobMatch.resume_id == resume_id,
+            models.JobMatch.job_id == job_id,
+        )
+    )
+
+
+def save_job_match(db: Session, resume_id: int, job_id: int, result: dict) -> models.JobMatch:
+    match = get_job_match(db, resume_id, job_id)
+    if match is None:
+        match = models.JobMatch(resume_id=resume_id, job_id=job_id)
+    match.match_score = result['match_score']
+    match.similarity_score = result['similarity_score']
+    match.matched_skills = result['matched_skills']
+    match.missing_skills = result['missing_skills']
+    match.embedding_model = result['embedding_model']
+    db.add(match)
+    db.commit()
+    db.refresh(match)
+    return match
+
+
+def create_career_role(db: Session, role_data: schemas.CareerRoleCreate) -> models.CareerRole:
+    role = models.CareerRole(name=role_data.name.strip(), description=role_data.description)
+    role.skills = [models.CareerRoleSkill(skill_name=skill.strip()) for skill in role_data.required_skills if skill.strip()]
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+    return role
+
+
+def list_career_roles(db: Session) -> list[models.CareerRole]:
+    return db.scalars(select(models.CareerRole).order_by(models.CareerRole.name)).all()
+
+
+def get_latest_career_roadmap(db: Session, user_id: int, resume_id: Optional[int] = None) -> Optional[models.CareerRoadmap]:
+    query = select(models.CareerRoadmap).where(models.CareerRoadmap.user_id == user_id)
+    if resume_id is not None:
+        query = query.where(models.CareerRoadmap.resume_id == resume_id)
+    return db.scalar(query.order_by(models.CareerRoadmap.updated_at.desc()))
 
 
 def create_interview_session(db: Session, user_id: int, resume_id: Optional[int], target_role: str) -> models.InterviewSession:
