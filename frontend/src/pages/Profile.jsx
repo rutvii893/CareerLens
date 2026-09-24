@@ -1,14 +1,9 @@
 import React from 'react';
-import GlassCard from '../components/common/GlassCard';
+import { Camera, Save, ShieldCheck } from 'lucide-react';
 
 const Profile = () => {
   return (
-    <div className="p-6 max-w-[1280px] mx-auto w-full">
-      <GlassCard>
-        <h1 className="text-2xl font-bold font-jakarta text-[#2563eb] mb-4">Profile</h1>
-        <p className="text-slate-600 font-inter">This page is ready for real API data integration.</p>
-      </GlassCard>
-    </div>
+    <div className="page-wrap"><div className="mb-8"><span className="eyebrow">Your profile</span><h1 className="page-title">Make your workspace yours.</h1><p className="muted mt-2">Keep your details current so your career tools stay relevant.</p></div><div className="grid gap-5 lg:grid-cols-[.75fr_1.25fr]"><section className="surface surface-pad"><div className="flex items-center gap-4"><div className="avatar text-lg">JD</div><div><h2 className="font-display text-xl font-bold">Jordan Davis</h2><p className="muted text-sm">Product designer · New York</p></div><button className="icon-button ml-auto" aria-label="Change profile photo"><Camera size={17} /></button></div><div className="border-t border-slate-200 mt-7 pt-6"><div className="flex gap-3 items-start"><ShieldCheck size={19} className="text-[#e26d3d]" /><div><strong className="text-sm">Profile strength: good</strong><p className="muted text-xs mt-1">Add your portfolio link to make it stronger.</p></div></div></div></section><section className="surface surface-pad"><div className="flex justify-between items-center mb-6"><span className="section-label">Personal details</span><span className="tag">Saved locally</span></div><div className="grid gap-5 sm:grid-cols-2"><label className="form-field"><span className="form-label">Full name</span><input className="form-input" defaultValue="Jordan Davis" /></label><label className="form-field"><span className="form-label">Email address</span><input className="form-input" defaultValue="jordan@example.com" type="email" /></label><label className="form-field"><span className="form-label">Target role</span><select className="form-input" defaultValue="Product Designer"><option>Product Designer</option><option>Frontend Engineer</option><option>UX Researcher</option></select></label><label className="form-field"><span className="form-label">Location</span><input className="form-input" defaultValue="New York, NY" /></label></div><button className="button button-primary mt-7"><Save size={16} /> Save changes</button></section></div></div>
   );
 };
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class Token(BaseModel):
@@ -35,6 +35,8 @@ class UserUpdate(BaseModel):
 
 
 class UserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     email: EmailStr
@@ -42,16 +44,14 @@ class UserRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
-
-
 class ResumeBase(BaseModel):
     filename: str
     status: str
 
 
 class ResumeRead(ResumeBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     file_path: str
@@ -59,22 +59,21 @@ class ResumeRead(ResumeBase):
     active: bool
     extracted_text: Optional[str]
 
-    class Config:
-        orm_mode = True
-
-
 class ATSResultRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     resume_id: int
     overall_score: Optional[float]
     keyword_score: Optional[float]
     missing_keywords: List[str] = []
+    extracted_skills: List[str] = []
+    missing_skills: List[str] = []
+    recommended_skills: List[str] = []
     recommendations: List[str] = []
+    section_analysis: dict = {}
+    embedding_model: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        orm_mode = True
-
 
 class DashboardMetrics(BaseModel):
     readiness_score: float = 0.0
@@ -85,11 +84,17 @@ class DashboardMetrics(BaseModel):
 
 
 class ResumeAnalysisResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     overall_score: float = 0.0
     keyword_score: float = 0.0
     missing_keywords: List[str] = []
+    extracted_skills: List[str] = []
+    missing_skills: List[str] = []
+    recommended_skills: List[str] = []
     recommendations: List[str] = []
-
+    section_analysis: dict = {}
+    embedding_model: Optional[str] = None
 
 class ResumeUploadResponse(BaseModel):
     id: int
@@ -130,6 +135,8 @@ class InterviewEvaluateRequest(BaseModel):
 
 
 class InterviewSessionRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     resume_id: Optional[int]
@@ -140,5 +147,3 @@ class InterviewSessionRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True

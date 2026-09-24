@@ -1,5 +1,11 @@
+import collections
+from collections.abc import Iterable, Mapping
 from datetime import datetime, timedelta
 from typing import Any
+
+for name, value in {'Mapping': Mapping, 'Iterable': Iterable}.items():
+    if not hasattr(collections, name):
+        setattr(collections, name, value)
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext

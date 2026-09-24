@@ -1,14 +1,9 @@
 import React from 'react';
-import GlassCard from '../components/common/GlassCard';
+import { Clock3, ArrowRight, Sparkles } from 'lucide-react';
 
 const InterviewPrep = () => {
   return (
-    <div className="p-6 max-w-[1280px] mx-auto w-full">
-      <GlassCard>
-        <h1 className="text-2xl font-bold font-jakarta text-[#2563eb] mb-4">InterviewPrep</h1>
-        <p className="text-slate-600 font-inter">This page is ready for real API data integration.</p>
-      </GlassCard>
-    </div>
+    <div className="page-wrap"><div className="mb-8"><span className="eyebrow">Interview studio</span><h1 className="page-title">Practice answers that feel like you.</h1><p className="muted mt-2">Choose a session and get comfortable explaining your thinking.</p></div><div className="grid gap-5 lg:grid-cols-[1.2fr_.8fr]"><section className="surface surface-pad bg-[#132d5c] text-white"><div className="flex justify-between"><span className="tag bg-white/10 text-white">Recommended next</span><Sparkles size={21} className="text-[#f5b99e]" /></div><h2 className="font-display text-3xl font-bold mt-16 max-w-md">Tell me about a time you changed direction.</h2><p className="text-slate-300 text-sm mt-3 max-w-md">Behavioral · Product design · 4 min</p><button className="button button-primary mt-8">Start practice <ArrowRight size={16} /></button></section><section className="surface surface-pad"><span className="section-label">Choose a focus</span><div className="grid gap-3 mt-5">{[['Behavioral stories','Build concise STAR answers'],['Portfolio walkthrough','Explain decisions with confidence'],['Role fundamentals','Warm up your core skills']].map(([title,description]) => <button className="text-left p-4 rounded-xl border border-slate-200 hover:border-[#e26d3d] transition-colors" key={title}><div className="flex justify-between"><strong className="text-sm">{title}</strong><ArrowRight size={16} className="text-[#e26d3d]" /></div><p className="muted text-xs mt-2">{description}</p></button>)}</div></section></div><div className="grid gap-4 sm:grid-cols-3 mt-5">{[['4','Sessions complete'],['82%','Average clarity'],['18 min','This week']].map(([value,label]) => <div className="surface surface-pad" key={label}><Clock3 size={17} className="text-[#e26d3d]" /><div className="stat-value mt-3">{value}</div><p className="muted text-xs mt-1">{label}</p></div>)}</div></div>
   );
 };
 
