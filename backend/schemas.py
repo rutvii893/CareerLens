@@ -79,6 +79,16 @@ class DashboardMetrics(BaseModel):
     readiness_score: float = 0.0
     recent_ats_score: float = 0.0
     active_resume_id: Optional[int] = None
+    extracted_skills: List[str] = []
+    resume_improvement: List[str] = []
+    job_match_percentage: float = 0.0
+    matching_skills: List[str] = []
+    missing_skills: List[str] = []
+    recommended_jobs: List[dict] = []
+    career_skill_gap: List[str] = []
+    roadmap_progress: dict = {}
+    interview_performance: dict = {}
+    career_readiness_overview: dict = {}
     recent_applications: List[dict] = []
     recent_interviews: List[dict] = []
 
