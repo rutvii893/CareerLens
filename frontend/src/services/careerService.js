@@ -16,5 +16,9 @@ export const careerService = {
   createRoadmap: async (resumeId, targetRole) => {
     const response = await api.post('/career/roadmap', { resume_id: resumeId, target_role: targetRole });
     return response.data;
+  },
+  askCoach: async (question, resumeId, targetRole) => {
+    const response = await api.post('/career/coach/ask', { question, resume_id: resumeId || null, target_role: targetRole || null });
+    return response.data;
   }
 };

@@ -154,6 +154,7 @@ class InterviewSession(Base):
     target_role = Column(String(255), nullable=True)
     status = Column(String(64), nullable=False, default='pending')
     questions = Column(JSON, nullable=False, default=list)
+    answers = Column(JSON, nullable=False, default=list)
     feedback = Column(JSON, nullable=False, default=list)
     score = Column(Float, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
