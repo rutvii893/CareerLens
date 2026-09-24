@@ -1,9 +1,107 @@
-import React from 'react';
-import { Clock3, ArrowRight, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Target, MessageSquare, PlayCircle, Clock, CheckCircle2, History } from 'lucide-react';
 
 const InterviewPrep = () => {
+  const [selectedType, setSelectedType] = useState('Technical');
+
+  const history = [
+    { id: 1, date: 'Oct 12, 2026', type: 'Technical', role: 'Frontend Developer', score: 85 },
+    { id: 2, date: 'Oct 10, 2026', type: 'HR', role: 'Frontend Developer', score: 92 },
+    { id: 3, date: 'Oct 05, 2026', type: 'Mixed', role: 'React Engineer', score: 78 }
+  ];
+
   return (
-    <div className="page-wrap"><div className="mb-8"><span className="eyebrow">Interview studio</span><h1 className="page-title">Practice answers that feel like you.</h1><p className="muted mt-2">Choose a session and get comfortable explaining your thinking.</p></div><div className="grid gap-5 lg:grid-cols-[1.2fr_.8fr]"><section className="surface surface-pad bg-[#132d5c] text-white"><div className="flex justify-between"><span className="tag bg-white/10 text-white">Recommended next</span><Sparkles size={21} className="text-[#f5b99e]" /></div><h2 className="font-display text-3xl font-bold mt-16 max-w-md">Tell me about a time you changed direction.</h2><p className="text-slate-300 text-sm mt-3 max-w-md">Behavioral · Product design · 4 min</p><button className="button button-primary mt-8">Start practice <ArrowRight size={16} /></button></section><section className="surface surface-pad"><span className="section-label">Choose a focus</span><div className="grid gap-3 mt-5">{[['Behavioral stories','Build concise STAR answers'],['Portfolio walkthrough','Explain decisions with confidence'],['Role fundamentals','Warm up your core skills']].map(([title,description]) => <button className="text-left p-4 rounded-xl border border-slate-200 hover:border-[#e26d3d] transition-colors" key={title}><div className="flex justify-between"><strong className="text-sm">{title}</strong><ArrowRight size={16} className="text-[#e26d3d]" /></div><p className="muted text-xs mt-2">{description}</p></button>)}</div></section></div><div className="grid gap-4 sm:grid-cols-3 mt-5">{[['4','Sessions complete'],['82%','Average clarity'],['18 min','This week']].map(([value,label]) => <div className="surface surface-pad" key={label}><Clock3 size={17} className="text-[#e26d3d]" /><div className="stat-value mt-3">{value}</div><p className="muted text-xs mt-1">{label}</p></div>)}</div></div>
+    <div className="p-6 md:p-8 max-w-[1280px] mx-auto w-full">
+      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold font-jakarta text-[#0f172a] mb-2">Interview Preparation</h1>
+          <p className="text-[#64748b] font-inter">Practice with AI mock interviews tailored to your target role.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm">
+          <h2 className="text-xl font-bold font-jakarta text-[#0f172a] mb-6 flex items-center gap-2">
+            <PlayCircle className="w-5 h-5 text-[#2563eb]" />
+            New Interview Session
+          </h2>
+          
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-[#334155] mb-2">Target Role</label>
+            <div className="relative">
+              <Target className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748b] w-5 h-5" />
+              <input 
+                type="text" 
+                defaultValue="Frontend Developer"
+                className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-[#e2e8f0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb]/50 focus:border-[#2563eb] text-[#0f172a] font-medium"
+              />
+            </div>
+          </div>
+          
+          <div className="mb-8">
+            <label className="block text-sm font-medium text-[#334155] mb-2">Interview Type</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {['Technical', 'HR', 'Mixed'].map(type => (
+                <button 
+                  key={type}
+                  onClick={() => setSelectedType(type)}
+                  className={`py-3 px-4 rounded-xl border flex items-center justify-center gap-2 font-medium transition-all
+                    ${selectedType === type 
+                      ? 'bg-blue-50 border-[#2563eb] text-[#2563eb]' 
+                      : 'bg-white border-[#e2e8f0] text-[#64748b] hover:bg-slate-50 hover:border-[#cbd5e1]'}`}
+                >
+                  <MessageSquare className={`w-4 h-4 ${selectedType === type ? 'text-[#2563eb]' : 'text-[#64748b]'}`} />
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <button className="w-full py-4 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] text-white rounded-xl font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 text-lg">
+            <PlayCircle className="w-6 h-6" />
+            Start Interview
+          </button>
+        </div>
+
+        <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm">
+          <h2 className="text-xl font-bold font-jakarta text-[#0f172a] mb-6 flex items-center gap-2">
+            <History className="w-5 h-5 text-[#7c3aed]" />
+            Recent Sessions
+          </h2>
+          
+          <div className="space-y-4">
+            {history.map(session => (
+              <div key={session.id} className="p-4 rounded-xl border border-[#e2e8f0] hover:border-[#7c3aed] transition-colors cursor-pointer group">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-[#334155] rounded">
+                    {session.type}
+                  </span>
+                  <div className="flex items-center gap-1 text-[#64748b] text-xs">
+                    <Clock className="w-3 h-3" />
+                    {session.date}
+                  </div>
+                </div>
+                
+                <h3 className="font-bold text-[#0f172a] mb-3 text-sm">{session.role}</h3>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-[#64748b] text-sm">Overall Score</span>
+                  <div className="flex items-center gap-1">
+                    <span className={`font-bold ${session.score >= 80 ? 'text-[#16a34a]' : 'text-[#f59e0b]'}`}>
+                      {session.score}/100
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <button className="w-full mt-6 py-2.5 bg-white border border-[#e2e8f0] text-[#0f172a] rounded-lg font-medium shadow-sm hover:bg-slate-50 transition-colors">
+            View All History
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
