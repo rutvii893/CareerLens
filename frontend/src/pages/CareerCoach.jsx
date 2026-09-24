@@ -1,99 +1,32 @@
 import React from 'react';
-import { Target, CheckCircle2, AlertTriangle, ArrowRight, Zap } from 'lucide-react';
+import { AlertCircle, LoaderCircle, Send, Target } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { careerService } from '../services/careerService';
 
 const CareerCoach = () => {
-  return (
-    <div className="p-6 md:p-8 max-w-[1280px] mx-auto w-full">
-      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold font-jakarta text-[#0f172a] mb-2">Career Coach</h1>
-          <p className="text-[#64748b] font-inter">Personalized AI-driven insights to accelerate your career.</p>
-        </div>
-        <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 flex items-center gap-2">
-          <Target className="w-5 h-5 text-[#2563eb]" />
-          <span className="text-[#0f172a] font-medium text-sm">Target Role: <span className="text-[#2563eb] font-bold">Frontend Developer</span></span>
-        </div>
-      </div>
+  const [searchParams] = useSearchParams();
+  const [resumeId, setResumeId] = React.useState(searchParams.get('resumeId') || '');
+  const [targetRole, setTargetRole] = React.useState(searchParams.get('targetRole') || '');
+  const [question, setQuestion] = React.useState('');
+  const [response, setResponse] = React.useState(null);
+  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm">
-          <h2 className="text-xl font-bold font-jakarta text-[#0f172a] mb-6 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-[#f59e0b]" />
-            Career Insights
-          </h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-[#0f172a] text-sm">Strong React foundation</p>
-                <p className="text-[#64748b] text-xs mt-1">Your resume and assessments show deep knowledge of React hooks and state management.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-[#0f172a] text-sm">Good JavaScript skills</p>
-                <p className="text-[#64748b] text-xs mt-1">Solid understanding of ES6+ features and asynchronous programming.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
-              <AlertTriangle className="w-5 h-5 text-[#f59e0b] mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-[#0f172a] text-sm">Improve SQL</p>
-                <p className="text-[#64748b] text-xs mt-1">Missing database skills often required for senior or full-stack crossover roles.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
-              <AlertTriangle className="w-5 h-5 text-[#f59e0b] mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-[#0f172a] text-sm">Strengthen DSA</p>
-                <p className="text-[#64748b] text-xs mt-1">Data structures and algorithms are critical for passing technical rounds at top tech companies.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
-              <AlertTriangle className="w-5 h-5 text-[#f59e0b] mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-[#0f172a] text-sm">Improve backend development</p>
-                <p className="text-[#64748b] text-xs mt-1">Consider learning Node.js or Python to broaden your architectural understanding.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+  const askCoach = async () => {
+    if (question.trim().length < 3) return setError('Ask a career question with at least 3 characters.');
+    setLoading(true);
+    setError('');
+    try {
+      setResponse(await careerService.askCoach(question, resumeId, targetRole));
+      setQuestion('');
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || 'The career coach could not respond.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        <div className="bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm flex flex-col">
-          <h2 className="text-xl font-bold font-jakarta text-[#0f172a] mb-6">Recommended Next Steps</h2>
-          
-          <div className="flex-1 space-y-4">
-            {[
-              { id: 1, text: 'Strengthen DSA' },
-              { id: 2, text: 'Build one full-stack project' },
-              { id: 3, text: 'Improve SQL' },
-              { id: 4, text: 'Practice technical interviews' },
-            ].map(step => (
-              <div key={step.id} className="flex items-center gap-4 p-4 rounded-xl border border-[#e2e8f0] hover:border-[#2563eb] hover:bg-slate-50 transition-colors cursor-pointer group">
-                <div className="w-8 h-8 rounded-full bg-[#f8fafc] text-[#64748b] border border-[#e2e8f0] flex items-center justify-center font-bold text-sm group-hover:bg-[#2563eb] group-hover:text-white group-hover:border-[#2563eb] transition-colors">
-                  {step.id}
-                </div>
-                <span className="font-medium text-[#0f172a]">{step.text}</span>
-                <ArrowRight className="w-4 h-4 text-[#cbd5e1] ml-auto group-hover:text-[#2563eb] transition-colors" />
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-8 pt-6 border-t border-[#e2e8f0]">
-            <button className="w-full py-3.5 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all">
-              Generate Career Roadmap
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="page-wrap"><div className="mb-7"><span className="eyebrow">Career coach</span><h1 className="page-title">Ask about your next move.</h1><p className="muted mt-2">Responses use your stored resume, skills, target role, gaps, and roadmap.</p></div><section className="surface surface-pad mb-5"><div className="flex flex-col gap-3 md:flex-row"><div className="flex items-center gap-2 flex-1"><Target size={17} className="text-[#e26d3d]" /><input className="input flex-1" type="number" value={resumeId} onChange={(event) => setResumeId(event.target.value)} placeholder="Resume ID (optional)" /></div><input className="input flex-1" value={targetRole} onChange={(event) => setTargetRole(event.target.value)} placeholder="Target role (optional)" /></div><textarea className="input mt-3 min-h-28 w-full" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ask a career-related question" /><button className="button button-primary mt-3" onClick={askCoach} disabled={loading}>{loading ? <LoaderCircle className="animate-spin" size={16} /> : <Send size={16} />} Ask coach</button>{error && <p className="flex gap-2 items-center text-sm text-red-700 mt-3"><AlertCircle size={16} />{error}</p>}</section>{response && <section className="surface surface-pad"><div className="flex flex-wrap justify-between gap-3"><span className="section-label">Coach response</span><span className="tag">{response.provider}</span></div><p className="whitespace-pre-wrap text-sm leading-7 mt-5">{response.answer}</p><div className="grid gap-5 md:grid-cols-2 mt-7"><div><span className="section-label">Current skills</span><div className="flex flex-wrap gap-2 mt-3">{response.current_skills.length ? response.current_skills.map((skill) => <span className="tag" key={skill}>{skill}</span>) : <p className="muted text-sm mt-3">No catalogued skills found.</p>}</div></div><div><span className="section-label">Recorded skill gaps</span><div className="flex flex-wrap gap-2 mt-3">{response.missing_skills.length ? response.missing_skills.map((skill) => <span className="tag text-[#b45309] bg-[#fff4d6]" key={skill}>{skill}</span>) : <p className="muted text-sm mt-3">No role-specific gaps recorded.</p>}</div></div></div></section>}</div>;
 };
 
 export default CareerCoach;

@@ -3,12 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import models
 from .config import settings
-from .database import SessionLocal, engine, ensure_resume_analysis_columns
+from .database import SessionLocal, engine, ensure_interview_columns
 from .routers import auth, users, resumes, matching, career, interview
 from .services.career_intelligence import ensure_default_roles
 
 models.Base.metadata.create_all(bind=engine)
-ensure_resume_analysis_columns()
+ensure_interview_columns()
 
 with SessionLocal() as startup_db:
     ensure_default_roles(startup_db)

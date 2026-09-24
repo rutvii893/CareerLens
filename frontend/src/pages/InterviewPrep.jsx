@@ -1,108 +1,50 @@
-import React, { useState } from 'react';
-import { Target, MessageSquare, PlayCircle, Clock, CheckCircle2, History } from 'lucide-react';
+import React from 'react';
+import { AlertCircle, CheckCircle2, LoaderCircle, MessageSquare, PlayCircle, Target } from 'lucide-react';
+import { interviewService } from '../services/interviewService';
 
 const InterviewPrep = () => {
-  const [selectedType, setSelectedType] = useState('Technical');
+  const [resumeId, setResumeId] = React.useState('');
+  const [targetRole, setTargetRole] = React.useState('');
+  const [session, setSession] = React.useState(null);
+  const [answer, setAnswer] = React.useState('');
+  const [evaluation, setEvaluation] = React.useState(null);
+  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
-  const history = [
-    { id: 1, date: 'Oct 12, 2026', type: 'Technical', role: 'Frontend Developer', score: 85 },
-    { id: 2, date: 'Oct 10, 2026', type: 'HR', role: 'Frontend Developer', score: 92 },
-    { id: 3, date: 'Oct 05, 2026', type: 'Mixed', role: 'React Engineer', score: 78 }
-  ];
+  const startSession = async () => {
+    if (!resumeId || targetRole.trim().length < 2) return setError('Enter a resume ID and target role.');
+    setLoading(true);
+    setError('');
+    try {
+      setSession(await interviewService.startSession(resumeId, targetRole));
+      setEvaluation(null);
+      setAnswer('');
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || 'Interview session could not be started.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  return (
-    <div className="p-6 md:p-8 max-w-[1280px] mx-auto w-full">
-      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold font-jakarta text-[#0f172a] mb-2">Interview Preparation</h1>
-          <p className="text-[#64748b] font-inter">Practice with AI mock interviews tailored to your target role.</p>
-        </div>
-      </div>
+  const currentQuestion = session?.questions?.find((question) => !session.feedback?.some((item) => item.question_id === question.id));
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm">
-          <h2 className="text-xl font-bold font-jakarta text-[#0f172a] mb-6 flex items-center gap-2">
-            <PlayCircle className="w-5 h-5 text-[#2563eb]" />
-            New Interview Session
-          </h2>
-          
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-[#334155] mb-2">Target Role</label>
-            <div className="relative">
-              <Target className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748b] w-5 h-5" />
-              <input 
-                type="text" 
-                defaultValue="Frontend Developer"
-                className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-[#e2e8f0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb]/50 focus:border-[#2563eb] text-[#0f172a] font-medium"
-              />
-            </div>
-          </div>
-          
-          <div className="mb-8">
-            <label className="block text-sm font-medium text-[#334155] mb-2">Interview Type</label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {['Technical', 'HR', 'Mixed'].map(type => (
-                <button 
-                  key={type}
-                  onClick={() => setSelectedType(type)}
-                  className={`py-3 px-4 rounded-xl border flex items-center justify-center gap-2 font-medium transition-all
-                    ${selectedType === type 
-                      ? 'bg-blue-50 border-[#2563eb] text-[#2563eb]' 
-                      : 'bg-white border-[#e2e8f0] text-[#64748b] hover:bg-slate-50 hover:border-[#cbd5e1]'}`}
-                >
-                  <MessageSquare className={`w-4 h-4 ${selectedType === type ? 'text-[#2563eb]' : 'text-[#64748b]'}`} />
-                  {type}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <button className="w-full py-4 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] text-white rounded-xl font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 text-lg">
-            <PlayCircle className="w-6 h-6" />
-            Start Interview
-          </button>
-        </div>
+  const submitAnswer = async () => {
+    if (!currentQuestion || !answer.trim()) return setError('Write an answer before submitting.');
+    setLoading(true);
+    setError('');
+    try {
+      const result = await interviewService.evaluateAnswer(session.id, currentQuestion.id, answer);
+      setEvaluation(result);
+      setSession(await interviewService.getSession(session.id));
+      setAnswer('');
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || 'Answer evaluation failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm">
-          <h2 className="text-xl font-bold font-jakarta text-[#0f172a] mb-6 flex items-center gap-2">
-            <History className="w-5 h-5 text-[#7c3aed]" />
-            Recent Sessions
-          </h2>
-          
-          <div className="space-y-4">
-            {history.map(session => (
-              <div key={session.id} className="p-4 rounded-xl border border-[#e2e8f0] hover:border-[#7c3aed] transition-colors cursor-pointer group">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-[#334155] rounded">
-                    {session.type}
-                  </span>
-                  <div className="flex items-center gap-1 text-[#64748b] text-xs">
-                    <Clock className="w-3 h-3" />
-                    {session.date}
-                  </div>
-                </div>
-                
-                <h3 className="font-bold text-[#0f172a] mb-3 text-sm">{session.role}</h3>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-[#64748b] text-sm">Overall Score</span>
-                  <div className="flex items-center gap-1">
-                    <span className={`font-bold ${session.score >= 80 ? 'text-[#16a34a]' : 'text-[#f59e0b]'}`}>
-                      {session.score}/100
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <button className="w-full mt-6 py-2.5 bg-white border border-[#e2e8f0] text-[#0f172a] rounded-lg font-medium shadow-sm hover:bg-slate-50 transition-colors">
-            View All History
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="page-wrap"><div className="mb-7"><span className="eyebrow">Interview intelligence</span><h1 className="page-title">Practice with structured feedback.</h1><p className="muted mt-2">Questions are based on your resume and target role. Answers are scored for relevance, completeness, and concrete evidence.</p></div><section className="surface surface-pad mb-5"><div className="flex flex-col gap-3 md:flex-row"><div className="flex items-center gap-2 flex-1"><Target size={17} className="text-[#e26d3d]" /><input className="input flex-1" type="number" value={resumeId} onChange={(event) => setResumeId(event.target.value)} placeholder="Resume ID" /></div><input className="input flex-1" value={targetRole} onChange={(event) => setTargetRole(event.target.value)} placeholder="Target role" /><button className="button button-primary" onClick={startSession} disabled={loading}>{loading ? <LoaderCircle className="animate-spin" size={16} /> : <PlayCircle size={16} />} Start session</button></div>{error && <p className="flex gap-2 items-center text-sm text-red-700 mt-3"><AlertCircle size={16} />{error}</p>}</section>{session && <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]"><section className="surface surface-pad"><div className="flex items-center gap-2"><MessageSquare size={18} className="text-[#e26d3d]" /><span className="section-label">{session.target_role} interview</span></div>{currentQuestion ? <><span className="tag mt-5 inline-flex">{currentQuestion.category}</span><h2 className="font-display text-2xl font-bold mt-4">{currentQuestion.prompt}</h2><textarea className="input min-h-40 w-full mt-5" value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="Write your answer" /><button className="button button-primary mt-4" onClick={submitAnswer} disabled={loading}>{loading ? <LoaderCircle className="animate-spin" size={16} /> : <CheckCircle2 size={16} />} Submit answer</button></> : <div className="muted text-sm mt-6">This interview is complete.</div>}</section><section className="surface surface-pad"><span className="section-label">Session score</span><div className="font-display text-5xl font-bold mt-4">{Math.round(session.score || 0)}<span className="text-xl text-slate-400">/100</span></div>{evaluation && <div className="mt-7"><span className="section-label">Latest feedback</span><p className="text-sm font-bold mt-4">Score: {evaluation.score}/100</p><ul className="grid gap-2 mt-3 text-sm">{evaluation.strengths.map((item) => <li key={item} className="text-green-700">+ {item}</li>)}{evaluation.missing_points.map((item) => <li key={item} className="text-amber-700">Add: {item}</li>)}{evaluation.improvement_feedback.map((item) => <li key={item} className="text-slate-700">{item}</li>)}</ul></div>}</section></div>}</div>;
 };
 
 export default InterviewPrep;

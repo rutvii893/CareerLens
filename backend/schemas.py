@@ -186,13 +186,39 @@ class CareerRoadmapResponse(BaseModel):
 
 class InterviewStartRequest(BaseModel):
     resume_id: int
-    target_role: str
+    target_role: str = Field(..., min_length=2, max_length=255)
+    interview_type: str = Field('Mixed', min_length=2, max_length=32)
 
 
 class InterviewEvaluateRequest(BaseModel):
     session_id: int
     question_id: int
-    answer_text: str
+    answer_text: str = Field(..., min_length=1, max_length=10000)
+
+
+class InterviewEvaluationResponse(BaseModel):
+    session_id: int
+    question_id: int
+    score: float
+    strengths: List[str] = []
+    missing_points: List[str] = []
+    improvement_feedback: List[str] = []
+
+
+class CareerCoachRequest(BaseModel):
+    question: str = Field(..., min_length=3, max_length=4000)
+    resume_id: Optional[int] = None
+    target_role: Optional[str] = Field(None, min_length=2, max_length=255)
+
+
+class CareerCoachResponse(BaseModel):
+    answer: str
+    provider: str
+    target_role: Optional[str] = None
+    resume_id: Optional[int] = None
+    current_skills: List[str] = []
+    missing_skills: List[str] = []
+    roadmap: List[dict] = []
 
 
 class InterviewSessionRead(BaseModel):
@@ -204,6 +230,8 @@ class InterviewSessionRead(BaseModel):
     target_role: Optional[str]
     status: str
     questions: List[dict] = []
+    answers: List[dict] = []
+    feedback: List[dict] = []
     score: Optional[float]
     created_at: datetime
     updated_at: datetime

@@ -221,13 +221,20 @@ def get_latest_career_roadmap(db: Session, user_id: int, resume_id: Optional[int
     return db.scalar(query.order_by(models.CareerRoadmap.updated_at.desc()))
 
 
-def create_interview_session(db: Session, user_id: int, resume_id: Optional[int], target_role: str) -> models.InterviewSession:
+def create_interview_session(
+    db: Session,
+    user_id: int,
+    resume_id: Optional[int],
+    target_role: str,
+    questions: Optional[list[dict]] = None,
+) -> models.InterviewSession:
     session = models.InterviewSession(
         user_id=user_id,
         resume_id=resume_id,
         target_role=target_role,
         status='pending',
-        questions=[],
+        questions=questions or [],
+        answers=[],
         feedback=[],
     )
     db.add(session)
@@ -238,6 +245,21 @@ def create_interview_session(db: Session, user_id: int, resume_id: Optional[int]
 
 def get_interview_session(db: Session, session_id: int) -> Optional[models.InterviewSession]:
     return db.scalar(select(models.InterviewSession).where(models.InterviewSession.id == session_id))
+
+
+def save_interview_evaluation(db: Session, session: models.InterviewSession, question_id: int, answer_text: str, evaluation: dict) -> models.InterviewSession:
+    answers = list(session.answers or [])
+    answers.append({'question_id': question_id, 'answer_text': answer_text})
+    feedback = list(session.feedback or [])
+    feedback.append({'question_id': question_id, **evaluation})
+    session.answers = answers
+    session.feedback = feedback
+    session.score = round(sum(item['score'] for item in feedback) / len(feedback), 2)
+    session.status = 'in_progress'
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return session
 
 
 def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics:

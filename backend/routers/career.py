@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from .. import crud, models, schemas
 from ..dependencies import get_current_user, get_db
+from ..services.career_coach import answer_career_question
 from ..services.career_intelligence import analyze_career_gap, build_roadmap, ensure_default_roles, find_role
 
 router = APIRouter(prefix='/career', tags=['career'])
@@ -48,6 +49,15 @@ def create_role(role_data: schemas.CareerRoleCreate, db: Session = Depends(get_d
         db.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='Career role already exists') from exc
     return _role_schema(role)
+
+
+@router.post('/coach/ask', response_model=schemas.CareerCoachResponse)
+def ask_career_coach(request: schemas.CareerCoachRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    try:
+        result = answer_career_question(db, current_user.id, request.question, request.resume_id, request.target_role)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return schemas.CareerCoachResponse(**result)
 
 
 @router.post('/analyze', response_model=schemas.CareerAnalysisResponse)
