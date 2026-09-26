@@ -59,8 +59,30 @@ class UserRead(BaseModel):
     updated_at: datetime
 
 
+class SkillAssessmentItem(BaseModel):
+    name: str
+    category: str = 'Other'
+    current_score: float = 0.0
+    target_score: float = 80.0
+    gap_percentage: float = 0.0
+    status: str = 'needs_improvement'
+    source: str = 'verified'
+
+
 class CustomSkillCreate(BaseModel):
     skill_name: str = Field(..., min_length=1, max_length=128)
+    current_score: Optional[float] = Field(None, ge=0, le=100)
+
+
+class SkillAssessmentUpdateRequest(BaseModel):
+    skill_name: str
+    current_score: float = Field(..., ge=0, le=100)
+    target_score: Optional[float] = Field(80.0, ge=1, le=100)
+
+
+class TargetGoalUpdateRequest(BaseModel):
+    target_role: str
+    target_score: float = Field(80.0, ge=1, le=100)
 
 
 class SkillsResponse(BaseModel):
@@ -69,6 +91,11 @@ class SkillsResponse(BaseModel):
     all_skills: List[str] = []
     categorized_skills: dict = {}
     target_role: Optional[str] = None
+    target_score: float = 80.0
+    overall_skill_gap_percentage: float = 0.0
+    skills_to_improve: List[SkillAssessmentItem] = []
+    skills_meeting_target: List[SkillAssessmentItem] = []
+    assessments: List[SkillAssessmentItem] = []
     role_matching_skills: List[str] = []
     role_missing_skills: List[str] = []
     role_readiness_score: float = 0.0
@@ -120,6 +147,9 @@ class DashboardMetrics(BaseModel):
     missing_skills: List[str] = []
     recommended_jobs: List[dict] = []
     career_skill_gap: List[str] = []
+    overall_skill_gap: float = 0.0
+    target_role: Optional[str] = None
+    target_score: float = 80.0
     roadmap_progress: dict = {}
     interview_performance: dict = {}
     career_readiness_overview: dict = {}
@@ -128,6 +158,7 @@ class DashboardMetrics(BaseModel):
     recent_applications: List[dict] = []
     recent_interviews: List[dict] = []
     recent_activity: List[dict] = []
+    service_breakdowns: dict = {}
 
 
 class ResumeAnalysisResponse(BaseModel):

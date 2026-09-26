@@ -76,6 +76,45 @@ def add_user_custom_skill(db: Session, user_id: int, skill_name: str) -> List[st
     return user.custom_skills or []
 
 
+def update_user_skill_assessment(db: Session, user_id: int, skill_name: str, current_score: float, target_score: float = 80.0) -> dict:
+    user = get_user(db, user_id)
+    if not user:
+        return {}
+    prefs = dict(user.preferences or {})
+    assessments = dict(prefs.get('skill_assessments') or {})
+    assessments[skill_name] = {
+        'current_score': round(float(current_score), 1),
+        'target_score': round(float(target_score), 1),
+    }
+    prefs['skill_assessments'] = assessments
+    user.preferences = prefs
+    # ensure skill is in custom_skills if not already
+    custom = list(user.custom_skills or [])
+    if not any(s.lower() == skill_name.strip().lower() for s in custom):
+        custom.append(skill_name.strip())
+        user.custom_skills = custom
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return assessments
+
+
+def update_user_target_goal(db: Session, user_id: int, target_role: str, target_score: float = 80.0) -> models.User:
+    user = get_user(db, user_id)
+    if not user:
+        return None
+    user.target_role = target_role.strip()
+    prefs = dict(user.preferences or {})
+    prefs['target_score'] = round(float(target_score), 1)
+    user.preferences = prefs
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def remove_user_custom_skill(db: Session, user_id: int, skill_name: str) -> List[str]:
     user = get_user(db, user_id)
     if not user:
@@ -84,6 +123,12 @@ def remove_user_custom_skill(db: Session, user_id: int, skill_name: str) -> List
     cleaned = skill_name.strip().lower()
     updated = [s for s in current if s.lower() != cleaned]
     user.custom_skills = updated
+    prefs = dict(user.preferences or {})
+    assessments = dict(prefs.get('skill_assessments') or {})
+    if skill_name in assessments:
+        del assessments[skill_name]
+        prefs['skill_assessments'] = assessments
+        user.preferences = prefs
     user.updated_at = datetime.utcnow()
     db.add(user)
     db.commit()
@@ -104,8 +149,17 @@ def get_resume(db: Session, resume_id: int) -> Optional[models.Resume]:
     return db.scalar(select(models.Resume).where(models.Resume.id == resume_id))
 
 
+def get_latest_resume(db: Session, user_id: int) -> Optional[models.Resume]:
+    return db.scalar(
+        select(models.Resume)
+        .where(models.Resume.user_id == user_id)
+        .order_by(desc(models.Resume.uploaded_at))
+    )
+
+
 def list_resumes(db: Session, user_id: int) -> list[models.Resume]:
     return db.scalars(select(models.Resume).where(models.Resume.user_id == user_id).order_by(models.Resume.uploaded_at.desc())).all()
+
 
 
 def get_latest_ats_result(db: Session, user_id: int) -> Optional[models.ResumeAnalysis]:
@@ -504,6 +558,208 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
             'link': '/interview',
         })
 
+    # Target role and target score from user preferences
+    prefs = dict(user.preferences or {}) if user else {}
+    target_role = user.target_role if (user and user.target_role) else (roadmap.target_role if roadmap else 'Full Stack Engineer')
+    target_score = float(prefs.get('target_score', 80.0))
+    skill_assessments = dict(prefs.get('skill_assessments') or {})
+
+    # Determine required skills for target role
+    role_obj = db.scalar(select(models.CareerRole).where(models.CareerRole.name.ilike(target_role.strip())))
+    if role_obj and role_obj.skills:
+        req_skills = [s.skill_name for s in role_obj.skills]
+    else:
+        from .services.career_intelligence import DEFAULT_ROLE_PROFILES
+        req_skills = DEFAULT_ROLE_PROFILES.get(target_role, ['Python', 'JavaScript', 'React', 'SQL', 'Git', 'REST API', 'Docker'])
+
+    # Calculate skill gaps according to formula: max(0, Target - Current) / Target * 100
+    individual_gaps = []
+    assessed_items = []
+    extracted_lower = {s.lower() for s in extracted}
+    custom_lower = {s.lower() for s in custom}
+
+    for skill in req_skills:
+        s_lower = skill.lower()
+        if skill in skill_assessments:
+            c_score = float(skill_assessments[skill].get('current_score', 0.0))
+            t_score = float(skill_assessments[skill].get('target_score', target_score))
+        elif s_lower in extracted_lower:
+            c_score = 80.0
+            t_score = target_score
+        elif s_lower in custom_lower:
+            c_score = 70.0
+            t_score = target_score
+        else:
+            c_score = 0.0
+            t_score = target_score
+
+        gap_pct = round(max(0.0, t_score - c_score) / t_score * 100.0, 1) if t_score > 0 else 0.0
+        individual_gaps.append(gap_pct)
+        status_label = 'meets_target' if gap_pct == 0.0 else ('missing' if c_score == 0 else 'needs_improvement')
+        assessed_items.append({
+            'name': skill,
+            'current_score': c_score,
+            'target_score': t_score,
+            'gap_percentage': gap_pct,
+            'status': status_label,
+            'source': 'resume' if s_lower in extracted_lower else ('custom' if s_lower in custom_lower else 'missing')
+        })
+
+    overall_skill_gap = round(sum(individual_gaps) / len(individual_gaps), 1) if individual_gaps else 0.0
+
+    # Service-specific breakdowns for Dashboard 14 master-detail views
+    service_breakdowns = {
+        'career_overview': {
+            'title': 'Career Overview',
+            'subtitle': 'Composite signals across resume, skills, roadmap, and applications',
+            'headline_metric': f'{Math_round_helper(readiness)}%',
+            'headline_label': 'Career Readiness',
+            'chart_title': 'Career Readiness Component Breakdown',
+            'chart_data': [
+                {'name': 'ATS Quality', 'value': Math_round_helper(ats_score), 'target': 100},
+                {'name': 'Job Match', 'value': Math_round_helper(job_score), 'target': 100},
+                {'name': 'Skill Coverage', 'value': Math_round_helper(100.0 - overall_skill_gap), 'target': 100},
+                {'name': 'Roadmap', 'value': Math_round_helper(roadmap_percentage), 'target': 100},
+                {'name': 'Interview Prep', 'value': Math_round_helper(interview_average), 'target': 100},
+            ],
+            'metrics': [
+                {'label': 'Resume ATS Score', 'value': f'{Math_round_helper(ats_score)}/100', 'subtext': resume_filename or 'No resume'},
+                {'label': 'Verified Skills', 'value': str(len(all_skills_unique)), 'subtext': f'{len(extracted)} from resume'},
+                {'label': 'Tracked Jobs', 'value': str(saved_count + applied_count), 'subtext': f'{applied_count} active'},
+                {'label': 'Roadmap Progress', 'value': f'{Math_round_helper(roadmap_percentage)}%', 'subtext': f'{completed_phases}/{len(roadmap_items)} phases'},
+            ]
+        },
+        'resume_intelligence': {
+            'title': 'Resume Intelligence',
+            'subtitle': 'Structural ATS analysis, section health, and keyword scanability',
+            'headline_metric': f'{Math_round_helper(ats_score)}/100',
+            'headline_label': 'Latest ATS Score',
+            'chart_title': 'Section Diagnostics & Coverage',
+            'chart_data': [
+                {'name': 'Keywords', 'value': Math_round_helper(latest_ats.keyword_score if latest_ats else 0), 'target': 100},
+                {'name': 'Summary', 'value': 100 if (latest_ats and 'Summary' not in (latest_ats.missing_keywords or [])) else 0, 'target': 100},
+                {'name': 'Experience', 'value': 100 if (latest_ats and 'Experience' not in (latest_ats.missing_keywords or [])) else 0, 'target': 100},
+                {'name': 'Education', 'value': 100 if (latest_ats and 'Education' not in (latest_ats.missing_keywords or [])) else 0, 'target': 100},
+                {'name': 'Skills', 'value': 100 if (latest_ats and 'Skills' not in (latest_ats.missing_keywords or [])) else 0, 'target': 100},
+                {'name': 'Projects', 'value': 100 if (latest_ats and 'Projects' not in (latest_ats.missing_keywords or [])) else 0, 'target': 100},
+            ],
+            'metrics': [
+                {'label': 'Overall ATS Score', 'value': f'{Math_round_helper(ats_score)}%', 'subtext': 'Structure + keywords'},
+                {'label': 'Keywords Score', 'value': f'{Math_round_helper(latest_ats.keyword_score if latest_ats else 0)}%', 'subtext': 'Header recognition'},
+                {'label': 'Extracted Skills', 'value': str(len(extracted)), 'subtext': 'Verified terms'},
+                {'label': 'Recommendations', 'value': str(len(latest_ats.recommendations or []) if latest_ats else 0), 'subtext': 'Action items'},
+            ]
+        },
+        'skills_gaps': {
+            'title': 'Skills & Skill Gaps',
+            'subtitle': f'Competency gap analysis for target role: {target_role} (Target Score: {Math_round_helper(target_score)}%)',
+            'headline_metric': f'{Math_round_helper(overall_skill_gap)}%',
+            'headline_label': 'Overall Skill Gap',
+            'chart_title': f'Proficiency vs Target ({target_role})',
+            'chart_data': [
+                {'name': item['name'], 'current': Math_round_helper(item['current_score']), 'target': Math_round_helper(item['target_score']), 'gap': Math_round_helper(item['gap_percentage'])}
+                for item in assessed_items[:8]
+            ],
+            'metrics': [
+                {'label': 'Overall Skill Gap', 'value': f'{Math_round_helper(overall_skill_gap)}%', 'subtext': 'Target gap %'},
+                {'label': 'Target Proficiency', 'value': f'{Math_round_helper(target_score)}/100', 'subtext': 'Target score'},
+                {'label': 'Skills Meeting Target', 'value': str(sum(1 for i in assessed_items if i['status'] == 'meets_target')), 'subtext': f'Out of {len(assessed_items)}'},
+                {'label': 'Skills to Improve', 'value': str(sum(1 for i in assessed_items if i['status'] != 'meets_target')), 'subtext': 'Priority skills'},
+            ]
+        },
+        'job_intelligence': {
+            'title': 'Job Intelligence',
+            'subtitle': 'Live Adzuna matching, application pipeline, and skill overlap',
+            'headline_metric': f'{Math_round_helper(job_score)}%',
+            'headline_label': 'Top Job Match',
+            'chart_title': 'Tracked Application Pipeline',
+            'chart_data': [
+                {'name': 'Saved', 'value': saved_count, 'target': max(5, saved_count + applied_count)},
+                {'name': 'Applied', 'value': sum(1 for a in applications if a.status == 'applied'), 'target': max(5, saved_count + applied_count)},
+                {'name': 'Interviewing', 'value': sum(1 for a in applications if a.status == 'interviewing'), 'target': max(5, saved_count + applied_count)},
+                {'name': 'Offers', 'value': sum(1 for a in applications if a.status == 'offer'), 'target': max(5, saved_count + applied_count)},
+            ],
+            'metrics': [
+                {'label': 'Best Job Match', 'value': f'{Math_round_helper(job_score)}%', 'subtext': top_match.job.title if (top_match and top_match.job) else 'No match'},
+                {'label': 'Saved Jobs', 'value': str(saved_count), 'subtext': 'In tracker'},
+                {'label': 'Active Applications', 'value': str(applied_count), 'subtext': 'In review'},
+                {'label': 'Matching Skills', 'value': str(len(top_match.matched_skills or []) if top_match else 0), 'subtext': 'Skill overlap'},
+            ]
+        },
+        'interview_prep': {
+            'title': 'Interview Preparation',
+            'subtitle': 'Mock technical & behavioral practice evaluation metrics',
+            'headline_metric': f'{Math_round_helper(interview_average)}/100',
+            'headline_label': 'Average Practice Score',
+            'chart_title': 'Recent Session Performance',
+            'chart_data': [
+                {'name': sess.target_role or f'Session {sess.id}', 'value': Math_round_helper(sess.score or 0), 'target': 100}
+                for sess in reversed(interviews[:6])
+            ] if interviews else [{'name': 'No sessions', 'value': 0, 'target': 100}],
+            'metrics': [
+                {'label': 'Average Score', 'value': f'{Math_round_helper(interview_average)}/100', 'subtext': 'Across all sessions'},
+                {'label': 'Completed Sessions', 'value': str(len(interviews)), 'subtext': 'Practice runs'},
+                {'label': 'Target Practice Role', 'value': target_role, 'subtext': 'Focus role'},
+                {'label': 'Latest Evaluation', 'value': f"{Math_round_helper(interviews[0].score) if (interviews and interviews[0].score) else '—'}/100", 'subtext': 'Most recent'},
+            ]
+        },
+        'career_roadmap': {
+            'title': 'Career Roadmap',
+            'subtitle': f'Personalized learning milestones for {roadmap.target_role if roadmap else target_role}',
+            'headline_metric': f'{Math_round_helper(roadmap_percentage)}%',
+            'headline_label': 'Roadmap Completion',
+            'chart_title': 'Milestone Phase Progress',
+            'chart_data': [
+                {'name': p.get('title', f"Phase {p.get('phase', idx+1)}"), 'value': 100 if p.get('status') in {'completed', 'done'} else (50 if p.get('status') == 'in_progress' else 0), 'target': 100}
+                for idx, p in enumerate(roadmap_items[:6])
+            ] if roadmap_items else [{'name': 'No roadmap generated', 'value': 0, 'target': 100}],
+            'metrics': [
+                {'label': 'Roadmap Progress', 'value': f'{Math_round_helper(roadmap_percentage)}%', 'subtext': f'{completed_phases} of {len(roadmap_items)} phases'},
+                {'label': 'Target Role', 'value': roadmap.target_role if roadmap else target_role, 'subtext': 'Milestone plan'},
+                {'label': 'Skills Addressed', 'value': str(len(career_gap)), 'subtext': 'Skill gaps covered'},
+                {'label': 'Phases Remaining', 'value': str(len(roadmap_items) - completed_phases), 'subtext': 'Up next'},
+            ]
+        }
+    }
+
+    # Job recommendations with transparent matched skills and job-specific skill gaps
+    recommended_jobs_list = []
+    if matches:
+        for match in matches[:6]:
+            if match.job:
+                recommended_jobs_list.append({
+                    'id': match.job.id,
+                    'title': match.job.title,
+                    'company': match.job.company,
+                    'location': match.job.location or 'Remote / Hybrid',
+                    'match_score': match.match_score,
+                    'matched_skills': list(match.matched_skills or []),
+                    'missing_skills': list(match.missing_skills or []),
+                    'url': getattr(match.job, 'redirect_url', None) or getattr(match.job, 'url', None),
+                })
+    else:
+        # Fallback to recent jobs in DB matching user target role or keywords
+        db_jobs = db.scalars(select(models.Job).order_by(desc(models.Job.posted_at if hasattr(models.Job, 'posted_at') else models.Job.id)).limit(8)).all()
+        user_skills_set = {s.lower() for s in all_skills_unique}
+        for j in db_jobs:
+            req_j = list(j.required_skills or [])
+            if not req_j and role_obj:
+                req_j = req_skills[:5]
+            m_skills = [s for s in req_j if s.lower() in user_skills_set]
+            gap_skills = [s for s in req_j if s.lower() not in user_skills_set]
+            m_score = round((len(m_skills) / max(1, len(req_j))) * 100, 1)
+            recommended_jobs_list.append({
+                'id': j.id,
+                'title': j.title,
+                'company': j.company,
+                'location': j.location or 'Remote / Hybrid',
+                'match_score': m_score,
+                'matched_skills': m_skills,
+                'missing_skills': gap_skills,
+                'url': getattr(j, 'redirect_url', None) or getattr(j, 'url', None),
+            })
+
+
     return schemas.DashboardMetrics(
         readiness_score=readiness,
         recent_ats_score=ats_score,
@@ -512,15 +768,14 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
         extracted_skills=all_skills_unique,
         total_skills_count=len(all_skills_unique),
         resume_improvement=list(latest_ats.recommendations or []) if latest_ats else [],
-        job_match_percentage=job_score,
-        matching_skills=list(top_match.matched_skills or []) if top_match else [],
-        missing_skills=list(top_match.missing_skills or []) if top_match else [],
-        recommended_jobs=[
-            {'id': match.job.id, 'title': match.job.title, 'company': match.job.company, 'match_score': match.match_score}
-            for match in matches[:5]
-            if match.job is not None
-        ],
+        job_match_percentage=job_score if top_match else (recommended_jobs_list[0]['match_score'] if recommended_jobs_list else 0.0),
+        matching_skills=list(top_match.matched_skills or []) if top_match else (recommended_jobs_list[0]['matched_skills'] if recommended_jobs_list else []),
+        missing_skills=list(top_match.missing_skills or []) if top_match else (recommended_jobs_list[0]['missing_skills'] if recommended_jobs_list else []),
+        recommended_jobs=recommended_jobs_list,
         career_skill_gap=career_gap,
+        overall_skill_gap=overall_skill_gap,
+        target_role=target_role,
+        target_score=target_score,
         roadmap_progress={
             'id': roadmap.id if roadmap else None,
             'target_role': roadmap.target_role if roadmap else (user.target_role if user else None),
@@ -554,8 +809,10 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
             for session in interviews[:5]
         ],
         recent_activity=recent_activity[:6],
+        service_breakdowns=service_breakdowns,
     )
 
 
 def Math_round_helper(val) -> int:
     return int(round(val)) if val is not None else 0
+

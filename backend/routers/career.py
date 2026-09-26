@@ -4,12 +4,12 @@ from sqlalchemy.orm import Session
 from .. import crud, models, schemas
 from ..dependencies import get_current_user, get_db
 from ..services.career_coach import answer_career_question
-from ..services.career_intelligence import analyze_career_gap, build_roadmap, ensure_default_roles, find_role
+from ..services.career_intelligence import analyze_career_gap, build_roadmap, ensure_default_roles, find_or_create_role
 
 router = APIRouter(prefix='/career', tags=['career'])
 
 
-def _owned_resume(db: Session, resume_id: int | None, user_id: int):
+def _owned_resume(db: Session, resume_id: int | None, user_id: int) -> models.Resume | None:
     if resume_id is None:
         resume = db.scalar(
             models.Resume.__table__.select().where(models.Resume.user_id == user_id).order_by(models.Resume.uploaded_at.desc()).limit(1)
@@ -19,16 +19,15 @@ def _owned_resume(db: Session, resume_id: int | None, user_id: int):
         return db.get(models.Resume, resume.id)
     resume = crud.get_resume(db, resume_id)
     if resume is None or resume.user_id != user_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found')
+        # Fallback to latest resume if provided id doesn't match
+        return db.scalar(
+            models.Resume.__table__.select().where(models.Resume.user_id == user_id).order_by(models.Resume.uploaded_at.desc()).limit(1)
+        )
     return resume
 
 
-def _role(db: Session, request: schemas.CareerAnalyzeRequest):
-    ensure_default_roles(db)
-    role = find_role(db, request.role_id, request.target_role)
-    if role is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Career role not found')
-    return role
+def _role(db: Session, request: schemas.CareerAnalyzeRequest) -> models.CareerRole:
+    return find_or_create_role(db, request.role_id, request.target_role)
 
 
 def _role_schema(role: models.CareerRole | None) -> schemas.CareerRoleRead | None:
@@ -86,26 +85,27 @@ def ask_career_coach(request: schemas.CareerCoachRequest, db: Session = Depends(
 @router.post('/analyze', response_model=schemas.CareerAnalysisResponse)
 def analyze_career(request: schemas.CareerAnalyzeRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     resume = _owned_resume(db, request.resume_id, current_user.id)
-    if resume is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found. Please upload a resume first.')
+    user_db = crud.get_user(db, current_user.id)
+    custom_skills = list(user_db.custom_skills or []) if user_db else []
     role = _role(db, request)
-    result = analyze_career_gap(resume, role)
-    return schemas.CareerAnalysisResponse(role=_role_schema(role), resume_id=resume.id, **result)
+    result = analyze_career_gap(resume, role, custom_skills)
+    return schemas.CareerAnalysisResponse(role=_role_schema(role), resume_id=resume.id if resume else None, **result)
 
 
 @router.post('/roadmap', response_model=schemas.CareerRoadmapResponse)
 def create_roadmap(request: schemas.CareerAnalyzeRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     resume = _owned_resume(db, request.resume_id, current_user.id)
-    if resume is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found. Please upload a resume first.')
+    user_db = crud.get_user(db, current_user.id)
+    custom_skills = list(user_db.custom_skills or []) if user_db else []
+    
     role = _role(db, request)
-    analysis = analyze_career_gap(resume, role)
+    analysis = analyze_career_gap(resume, role, custom_skills)
     roadmap_items = build_roadmap(role, analysis['missing_skills'])
     stored = crud.create_career_roadmap(
         db,
         current_user.id,
         role.name,
-        resume.id,
+        resume.id if resume else None,
         roadmap_items,
         role.id,
         analysis['missing_skills'],
@@ -141,3 +141,4 @@ def update_roadmap_phase(
 def list_roadmaps(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     roadmaps = crud.list_user_roadmaps(db, current_user.id)
     return [_format_roadmap_response(r, db) for r in roadmaps]
+
