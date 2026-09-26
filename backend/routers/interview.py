@@ -14,19 +14,23 @@ def start_interview(request: schemas.InterviewStartRequest, db: Session = Depend
     if request.resume_id is not None:
         resume = crud.get_resume(db, request.resume_id)
         if resume is None or resume.user_id != current_user.id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found')
+            resume = crud.get_latest_resume(db, current_user.id)
     else:
         # Check latest user resume
         latest_ats = crud.get_latest_ats_result(db, current_user.id)
         if latest_ats and latest_ats.resume:
             resume = latest_ats.resume
+        else:
+            resume = crud.get_latest_resume(db, current_user.id)
 
     user_db = crud.get_user(db, current_user.id)
     custom_skills = list(user_db.custom_skills or []) if user_db else []
+    target_role = request.target_role or (user_db.target_role if user_db else 'Full Stack Engineer')
 
-    questions = generate_questions(resume, request.target_role, request.interview_type, custom_skills)
-    session = crud.create_interview_session(db, current_user.id, resume.id if resume else None, request.target_role, questions)
+    questions = generate_questions(resume, target_role, request.interview_type, custom_skills)
+    session = crud.create_interview_session(db, current_user.id, resume.id if resume else None, target_role, questions)
     return session
+
 
 
 @router.post('/evaluate', response_model=schemas.InterviewEvaluationResponse)
