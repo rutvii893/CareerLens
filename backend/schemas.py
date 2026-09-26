@@ -31,7 +31,14 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=128)
-    email: Optional[EmailStr]
+    email: Optional[EmailStr] = None
+    target_role: Optional[str] = None
+    location: Optional[str] = None
+    bio: Optional[str] = None
+    education: Optional[str] = None
+    experience: Optional[str] = None
+    custom_skills: Optional[List[str]] = None
+    preferences: Optional[dict] = None
 
 
 class UserRead(BaseModel):
@@ -41,8 +48,31 @@ class UserRead(BaseModel):
     name: str
     email: EmailStr
     role: str
+    target_role: Optional[str] = None
+    location: Optional[str] = None
+    bio: Optional[str] = None
+    education: Optional[str] = None
+    experience: Optional[str] = None
+    custom_skills: List[str] = []
+    preferences: dict = {}
     created_at: datetime
     updated_at: datetime
+
+
+class CustomSkillCreate(BaseModel):
+    skill_name: str = Field(..., min_length=1, max_length=128)
+
+
+class SkillsResponse(BaseModel):
+    extracted_skills: List[str] = []
+    custom_skills: List[str] = []
+    all_skills: List[str] = []
+    categorized_skills: dict = {}
+    target_role: Optional[str] = None
+    role_matching_skills: List[str] = []
+    role_missing_skills: List[str] = []
+    role_readiness_score: float = 0.0
+
 
 class ResumeBase(BaseModel):
     filename: str
@@ -57,15 +87,16 @@ class ResumeRead(ResumeBase):
     file_path: str
     uploaded_at: datetime
     active: bool
-    extracted_text: Optional[str]
+    extracted_text: Optional[str] = None
+
 
 class ATSResultRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     resume_id: int
-    overall_score: Optional[float]
-    keyword_score: Optional[float]
+    overall_score: Optional[float] = None
+    keyword_score: Optional[float] = None
     missing_keywords: List[str] = []
     extracted_skills: List[str] = []
     missing_skills: List[str] = []
@@ -75,11 +106,14 @@ class ATSResultRead(BaseModel):
     embedding_model: Optional[str] = None
     created_at: datetime
 
+
 class DashboardMetrics(BaseModel):
     readiness_score: float = 0.0
     recent_ats_score: float = 0.0
     active_resume_id: Optional[int] = None
+    active_resume_filename: Optional[str] = None
     extracted_skills: List[str] = []
+    total_skills_count: int = 0
     resume_improvement: List[str] = []
     job_match_percentage: float = 0.0
     matching_skills: List[str] = []
@@ -89,8 +123,11 @@ class DashboardMetrics(BaseModel):
     roadmap_progress: dict = {}
     interview_performance: dict = {}
     career_readiness_overview: dict = {}
+    saved_jobs_count: int = 0
+    applications_count: int = 0
     recent_applications: List[dict] = []
     recent_interviews: List[dict] = []
+    recent_activity: List[dict] = []
 
 
 class ResumeAnalysisResponse(BaseModel):
@@ -105,6 +142,7 @@ class ResumeAnalysisResponse(BaseModel):
     recommendations: List[str] = []
     section_analysis: dict = {}
     embedding_model: Optional[str] = None
+
 
 class ResumeUploadResponse(BaseModel):
     id: int
@@ -130,9 +168,9 @@ class JobRead(BaseModel):
 
     id: int
     title: str
-    company: Optional[str]
-    description: Optional[str]
-    location: Optional[str]
+    company: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
     required_skills: List[str] = []
     posted_at: datetime
 
@@ -144,6 +182,75 @@ class JobMatchRead(BaseModel):
     matched_skills: List[str] = []
     missing_skills: List[str] = []
     embedding_model: Optional[str] = None
+
+
+class AdzunaJobItem(BaseModel):
+    id: str
+    title: str
+    company: str
+    location: str
+    description: str
+    salary_min: Optional[float] = None
+    salary_max: Optional[float] = None
+    formatted_salary: str
+    salary_is_predicted: bool = False
+    job_type: str = 'Full-time'
+    category: Optional[str] = None
+    redirect_url: str
+    created: str
+    match_score: float = 0.0
+    matched_skills: List[str] = []
+    missing_skills: List[str] = []
+    source: str = 'adzuna'
+
+
+class AdzunaJobSearchResponse(BaseModel):
+    results: List[AdzunaJobItem] = []
+    total_count: int = 0
+    page: int = 1
+    results_per_page: int = 10
+    total_pages: int = 1
+    country: str = 'in'
+    personalized: bool = False
+    user_skills_used: List[str] = []
+
+
+class SavedJobCreate(BaseModel):
+    job_id: Optional[int] = None
+    job_title: str
+    company: Optional[str] = None
+    location: Optional[str] = None
+    redirect_url: Optional[str] = None
+    salary: Optional[str] = None
+    matched_skills: List[str] = []
+    missing_skills: List[str] = []
+    match_score: Optional[float] = None
+    status: str = 'saved'
+    notes: Optional[str] = None
+
+
+class SavedJobRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    job_id: Optional[int] = None
+    job_title: Optional[str] = None
+    company: Optional[str] = None
+    location: Optional[str] = None
+    redirect_url: Optional[str] = None
+    salary: Optional[str] = None
+    matched_skills: List[str] = []
+    missing_skills: List[str] = []
+    match_score: Optional[float] = None
+    status: str
+    applied_at: datetime
+    notes: Optional[str] = None
+
+
+class ApplicationStatusUpdate(BaseModel):
+    status: str = Field(..., pattern='^(saved|applied|interviewing|offer|rejected)$')
+    notes: Optional[str] = None
 
 
 class MatchingResponse(BaseModel):
@@ -165,7 +272,7 @@ class CareerRoleRead(BaseModel):
 
     id: int
     name: str
-    description: Optional[str]
+    description: Optional[str] = None
     required_skills: List[str] = []
 
 
@@ -177,7 +284,7 @@ class CareerRoleCreate(BaseModel):
 
 class CareerAnalysisResponse(BaseModel):
     role: CareerRoleRead
-    resume_id: Optional[int]
+    resume_id: Optional[int] = None
     current_skills: List[str] = []
     missing_skills: List[str] = []
     recommended_skills: List[str] = []
@@ -188,14 +295,23 @@ class CareerAnalysisResponse(BaseModel):
 class CareerRoadmapResponse(BaseModel):
     id: Optional[int] = None
     role: Optional[CareerRoleRead] = None
+    target_role: Optional[str] = None
     resume_id: Optional[int] = None
     missing_skills: List[str] = []
     recommended_skills: List[str] = []
     roadmap: List[dict] = []
+    completed_phases: int = 0
+    total_phases: int = 0
+    progress_percentage: float = 0.0
+    status: str = 'draft'
+
+
+class RoadmapPhaseUpdate(BaseModel):
+    status: str = Field(..., pattern='^(ready|in_progress|completed)$')
 
 
 class InterviewStartRequest(BaseModel):
-    resume_id: int
+    resume_id: Optional[int] = None
     target_role: str = Field(..., min_length=2, max_length=255)
     interview_type: str = Field('Mixed', min_length=2, max_length=32)
 
@@ -236,13 +352,12 @@ class InterviewSessionRead(BaseModel):
 
     id: int
     user_id: int
-    resume_id: Optional[int]
-    target_role: Optional[str]
+    resume_id: Optional[int] = None
+    target_role: Optional[str] = None
     status: str
     questions: List[dict] = []
     answers: List[dict] = []
     feedback: List[dict] = []
-    score: Optional[float]
+    score: Optional[float] = None
     created_at: datetime
     updated_at: datetime
-

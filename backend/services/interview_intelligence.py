@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import List, Optional
 from .. import models
 from .career_intelligence import find_role, role_skills
 from .resume_intelligence import extract_skills
@@ -9,19 +10,30 @@ class InterviewIntelligenceError(Exception):
     """Raised when interview intelligence cannot use the requested context."""
 
 
-def generate_questions(resume: models.Resume, target_role: str, interview_type: str) -> list[dict]:
-    resume_skills = extract_skills(resume.extracted_text or '')
-    selected_type = interview_type.casefold()
+def generate_questions(
+    resume: Optional[models.Resume],
+    target_role: str,
+    interview_type: str,
+    custom_skills: Optional[List[str]] = None,
+) -> list[dict]:
+    resume_skills = []
+    if resume and resume.extracted_text:
+        resume_skills = extract_skills(resume.extracted_text)
+    if custom_skills:
+        resume_skills = list(dict.fromkeys(resume_skills + custom_skills))
+    
+    selected_type = (interview_type or 'Mixed').casefold()
     questions = []
     question_id = 1
 
     if selected_type in {'technical', 'mixed'}:
-        for skill in (resume_skills[:2] or ['the main technical skill in your resume']):
+        skills_to_use = resume_skills[:2] if resume_skills else ['Python or SQL', 'System Architecture']
+        for skill in skills_to_use:
             questions.append({
                 'id': question_id,
                 'category': 'technical',
-                'prompt': f'How have you used {skill} in a project, and what trade-off did you make?',
-                'expected_points': ['specific project context', 'technical decision', 'result or lesson'],
+                'prompt': f'How have you used {skill} in a real project, and what technical trade-off or architectural decision did you make?',
+                'expected_points': ['specific project context', 'technical decision', 'result or lesson learned'],
             })
             question_id += 1
 
@@ -29,15 +41,15 @@ def generate_questions(resume: models.Resume, target_role: str, interview_type: 
         questions.append({
             'id': question_id,
             'category': 'behavioral',
-            'prompt': f'Tell me about a challenge you faced while preparing for or working toward {target_role}.',
+            'prompt': f'Tell me about a complex challenge or bottleneck you faced while working toward or in a {target_role} role.',
             'expected_points': ['clear situation', 'actions taken', 'measurable or concrete outcome'],
         })
         question_id += 1
         questions.append({
             'id': question_id,
             'category': 'behavioral',
-            'prompt': 'Describe how you receive feedback and apply it to improve your work.',
-            'expected_points': ['specific feedback', 'change made', 'result'],
+            'prompt': 'Describe a situation where you had to quickly adapt to critical feedback or changing requirements.',
+            'expected_points': ['specific feedback', 'changes implemented', 'impact on delivery'],
         })
 
     return questions
@@ -63,7 +75,7 @@ def evaluate_answer(question: dict, answer_text: str) -> dict:
     missing = [point for point in expected if point not in point_matches]
     improvements = [f'Add {point}.' for point in missing]
     if len(words) < 30:
-        improvements.append('Add a specific example and outcome.')
+        improvements.append('Add a specific example and measurable outcome.')
 
     return {
         'score': score,

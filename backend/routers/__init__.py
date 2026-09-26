@@ -1,1 +1,2 @@
-from . import auth, users, resumes, matching, career, interview
+from . import auth, users, resumes, matching, career, interview, jobs
+
