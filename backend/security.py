@@ -1,26 +1,29 @@
-import collections
-from collections.abc import Iterable, Mapping
+import bcrypt
 from datetime import datetime, timedelta
 from typing import Any
 
-for name, value in {'Mapping': Mapping, 'Iterable': Iterable}.items():
-    if not hasattr(collections, name):
-        setattr(collections, name, value)
-
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from .config import settings
 
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
-
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        pw_bytes = plain_password.encode('utf-8')
+        if len(pw_bytes) > 72:
+            pw_bytes = pw_bytes[:72]
+        return bcrypt.checkpw(pw_bytes, hashed_password.encode('utf-8'))
+    except Exception:
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    pw_bytes = password.encode('utf-8')
+    if len(pw_bytes) > 72:
+        pw_bytes = pw_bytes[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pw_bytes, salt).decode('utf-8')
+
 
 
 def create_access_token(subject: Any, expires_delta: timedelta | None = None) -> str:

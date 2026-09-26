@@ -12,8 +12,15 @@ class User(Base):
     email = Column(String(256), nullable=False, unique=True, index=True)
     hashed_password = Column(String(256), nullable=False)
     role = Column(String(32), nullable=False, default='student')
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    target_role = Column(String(255), nullable=True)
+    location = Column(String(128), nullable=True)
+    bio = Column(Text, nullable=True)
+    education = Column(String(255), nullable=True)
+    experience = Column(String(255), nullable=True)
+    custom_skills = Column(JSON, nullable=False, default=list)
+    preferences = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     resumes = relationship('Resume', back_populates='user', cascade='all, delete-orphan')
     applications = relationship('Application', back_populates='user', cascade='all, delete-orphan')
@@ -22,7 +29,7 @@ class User(Base):
     jobs = relationship('Job', back_populates='owner')
 
     __table_args__ = (
-        CheckConstraint("char_length(trim(name)) > 0", name='ck_users_name_not_blank'),
+        CheckConstraint("length(trim(name)) > 0", name='ck_users_name_not_blank'),
     )
 
 
@@ -34,7 +41,7 @@ class Resume(Base):
     filename = Column(String(255), nullable=False)
     file_path = Column(String(512), nullable=False)
     status = Column(String(64), nullable=False, default='uploaded')
-    uploaded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    uploaded_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now(), nullable=False)
     extracted_text = Column(Text, nullable=True)
     active = Column(Boolean, default=False, nullable=False)
 
@@ -137,7 +144,15 @@ class Application(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     job_id = Column(Integer, ForeignKey('jobs.id', ondelete='SET NULL'), nullable=True)
-    status = Column(String(64), nullable=False, default='pending')
+    job_title = Column(String(255), nullable=True)
+    company = Column(String(255), nullable=True)
+    location = Column(String(128), nullable=True)
+    redirect_url = Column(Text, nullable=True)
+    salary = Column(String(128), nullable=True)
+    matched_skills = Column(JSON, nullable=False, default=list)
+    missing_skills = Column(JSON, nullable=False, default=list)
+    match_score = Column(Float, nullable=True)
+    status = Column(String(64), nullable=False, default='saved')
     applied_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     notes = Column(Text, nullable=True)
 
@@ -188,7 +203,7 @@ class CareerRoadmap(Base):
     role = relationship('CareerRole', back_populates='roadmaps')
 
     __table_args__ = (
-        CheckConstraint("char_length(trim(target_role)) > 0", name='ck_career_roadmaps_target_role_not_blank'),
+        CheckConstraint("length(trim(target_role)) > 0", name='ck_career_roadmaps_target_role_not_blank'),
     )
 
 

@@ -31,8 +31,31 @@ def _role(db: Session, request: schemas.CareerAnalyzeRequest):
     return role
 
 
-def _role_schema(role: models.CareerRole) -> schemas.CareerRoleRead:
+def _role_schema(role: models.CareerRole | None) -> schemas.CareerRoleRead | None:
+    if not role:
+        return None
     return schemas.CareerRoleRead(id=role.id, name=role.name, description=role.description, required_skills=[skill.skill_name for skill in role.skills])
+
+
+def _format_roadmap_response(stored: models.CareerRoadmap, db: Session) -> schemas.CareerRoadmapResponse:
+    role = db.get(models.CareerRole, stored.role_id) if stored.role_id else None
+    items = list(stored.roadmap or [])
+    completed = sum(1 for item in items if item.get('status') in {'completed', 'done'})
+    total = len(items)
+    pct = round((completed / total * 100), 1) if total > 0 else 0.0
+    return schemas.CareerRoadmapResponse(
+        id=stored.id,
+        role=_role_schema(role),
+        target_role=stored.target_role,
+        resume_id=stored.resume_id,
+        missing_skills=list(stored.missing_skills or []),
+        recommended_skills=list(stored.recommended_skills or []),
+        roadmap=items,
+        completed_phases=completed,
+        total_phases=total,
+        progress_percentage=pct,
+        status=stored.status,
+    )
 
 
 @router.get('/roles', response_model=list[schemas.CareerRoleRead])
@@ -64,7 +87,7 @@ def ask_career_coach(request: schemas.CareerCoachRequest, db: Session = Depends(
 def analyze_career(request: schemas.CareerAnalyzeRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     resume = _owned_resume(db, request.resume_id, current_user.id)
     if resume is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found. Please upload a resume first.')
     role = _role(db, request)
     result = analyze_career_gap(resume, role)
     return schemas.CareerAnalysisResponse(role=_role_schema(role), resume_id=resume.id, **result)
@@ -74,41 +97,47 @@ def analyze_career(request: schemas.CareerAnalyzeRequest, db: Session = Depends(
 def create_roadmap(request: schemas.CareerAnalyzeRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     resume = _owned_resume(db, request.resume_id, current_user.id)
     if resume is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found. Please upload a resume first.')
     role = _role(db, request)
     analysis = analyze_career_gap(resume, role)
-    roadmap = build_roadmap(role, analysis['missing_skills'])
+    roadmap_items = build_roadmap(role, analysis['missing_skills'])
     stored = crud.create_career_roadmap(
         db,
         current_user.id,
         role.name,
         resume.id,
-        roadmap,
+        roadmap_items,
         role.id,
         analysis['missing_skills'],
         analysis['recommended_skills'],
     )
-    return schemas.CareerRoadmapResponse(
-        id=stored.id,
-        role=_role_schema(role),
-        resume_id=stored.resume_id,
-        missing_skills=stored.missing_skills,
-        recommended_skills=stored.recommended_skills,
-        roadmap=stored.roadmap,
-    )
+    return _format_roadmap_response(stored, db)
 
 
 @router.get('/roadmap', response_model=schemas.CareerRoadmapResponse)
 def get_roadmap(resumeId: int | None = None, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     stored = crud.get_latest_career_roadmap(db, current_user.id, resumeId)
     if stored is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Career roadmap not found')
-    role = db.get(models.CareerRole, stored.role_id) if stored.role_id else None
-    return schemas.CareerRoadmapResponse(
-        id=stored.id,
-        role=_role_schema(role) if role else None,
-        resume_id=stored.resume_id,
-        missing_skills=stored.missing_skills,
-        recommended_skills=stored.recommended_skills,
-        roadmap=stored.roadmap,
-    )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Career roadmap not found. Generate one for your target role.')
+    return _format_roadmap_response(stored, db)
+
+
+@router.patch('/roadmap/{roadmap_id}/phase/{phase_idx}', response_model=schemas.CareerRoadmapResponse)
+def update_roadmap_phase(
+    roadmap_id: int,
+    phase_idx: int,
+    phase_update: schemas.RoadmapPhaseUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Toggle or update completion status for a specific roadmap phase milestone."""
+    updated = crud.update_career_roadmap_phase(db, roadmap_id, current_user.id, phase_idx, phase_update.status)
+    if not updated:
+        raise HTTPException(status_code=404, detail='Roadmap or phase not found')
+    return _format_roadmap_response(updated, db)
+
+
+@router.get('/roadmaps', response_model=list[schemas.CareerRoadmapResponse])
+def list_roadmaps(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    roadmaps = crud.list_user_roadmaps(db, current_user.id)
+    return [_format_roadmap_response(r, db) for r in roadmaps]

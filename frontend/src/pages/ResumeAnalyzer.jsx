@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UploadCloud, File, AlertCircle, CheckCircle2 } from 'lucide-react';
 import api from '../services/api';
 
 const ResumeAnalyzer = () => {
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState(null);
@@ -29,13 +31,11 @@ const ResumeAnalyzer = () => {
 
     try {
       // Connect to real backend endpoint
-      const response = await api.post('/resumes/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await api.post('/resumes/upload', formData);
       setResult(response.data);
     } catch (err) {
       console.error('Upload failed:', err);
-      setError('Upload failed. Please ensure you are logged in and the file is a valid PDF or DOCX.');
+      setError(err.response?.data?.detail || 'Upload failed. Please ensure you are logged in and the file is a valid PDF or DOCX.');
     } finally {
       setUploading(false);
     }
@@ -108,7 +108,10 @@ const ResumeAnalyzer = () => {
             <p className="text-[#64748b] mb-2">Filename: <span className="font-semibold text-[#0f172a]">{result.filename}</span></p>
             <p className="text-[#64748b] mb-8">Status: <span className="font-semibold text-[#0f172a] capitalize">{result.status}</span></p>
             
-            <button className="px-8 py-3.5 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all">
+            <button 
+              onClick={() => navigate(`/resume/analysis?resumeId=${result.id}`)}
+              className="px-8 py-3.5 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
+            >
               Analyze Resume
             </button>
           </div>

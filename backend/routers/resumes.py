@@ -14,8 +14,15 @@ MAX_RESUME_BYTES = 10 * 1024 * 1024
 
 @router.post('/upload', response_model=schemas.ResumeUploadResponse, status_code=status.HTTP_201_CREATED)
 def upload_resume(file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    if file.content_type not in ('application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Unsupported file type')
+    filename_lower = (file.filename or '').lower()
+    is_pdf = file.content_type in ('application/pdf', 'application/x-pdf') or filename_lower.endswith('.pdf')
+    is_docx = file.content_type in (
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+        'application/docx',
+    ) or filename_lower.endswith('.docx')
+    if not (is_pdf or is_docx):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Unsupported file type. Please upload a PDF or DOCX file.')
 
     upload_root = os.path.abspath(config.settings.upload_dir)
     user_folder = os.path.join(upload_root, str(current_user.id))

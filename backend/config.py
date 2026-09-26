@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     upload_dir: str = 'uploads'
     gemini_api_key: Optional[str] = None
     gemini_model: str = 'gemini-2.0-flash'
+    adzuna_app_id: Optional[str] = None
+    adzuna_app_key: Optional[str] = None
+    adzuna_country: str = 'in'
 
     model_config = SettingsConfigDict(env_file=BASE_DIR / '.env', env_file_encoding='utf-8', extra='ignore')
 

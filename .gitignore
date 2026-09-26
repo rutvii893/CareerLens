@@ -2,20 +2,33 @@
 .env
 *.env
 !.env.example
+backend/.env
+
+# Uploads and temporary assets
+uploads/
+*.pdf
+*.docx
 
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
+backend/__pycache__/
+backend/routers/__pycache__/
+backend/services/__pycache__/
+backend/tests/__pycache__/
 
 # Python virtual environments
 venv/
 .venv/
 env/
+backend/venv/
 
 # Node
 node_modules/
+frontend/node_modules/
 dist/
+frontend/dist/
 dist-ssr/
 
 # Logs

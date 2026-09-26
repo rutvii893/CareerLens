@@ -44,20 +44,27 @@ def clean_resume_text(text: str) -> str:
 def extract_text_from_file(file_path: str, content_type: Optional[str] = None) -> str:
     path = Path(file_path)
     extension = path.suffix.lower()
-    if content_type == 'application/pdf' or extension == '.pdf':
+    ct = (content_type or '').lower()
+    if extension == '.pdf' or 'pdf' in ct:
         try:
             from pypdf import PdfReader
         except ImportError as exc:
             raise ResumeIntelligenceError('PDF extraction requires pypdf') from exc
-        text = '\n'.join(page.extract_text() or '' for page in PdfReader(str(path)).pages)
-    elif content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' or extension == '.docx':
+        try:
+            text = '\n'.join(page.extract_text() or '' for page in PdfReader(str(path)).pages)
+        except Exception as exc:
+            raise ResumeIntelligenceError(f'Could not read PDF file: {str(exc)}') from exc
+    elif extension in ('.docx', '.doc') or 'word' in ct or 'docx' in ct:
         try:
             from docx import Document
         except ImportError as exc:
             raise ResumeIntelligenceError('DOCX extraction requires python-docx') from exc
-        text = '\n'.join(paragraph.text for paragraph in Document(str(path)).paragraphs)
+        try:
+            text = '\n'.join(paragraph.text for paragraph in Document(str(path)).paragraphs)
+        except Exception as exc:
+            raise ResumeIntelligenceError(f'Could not read DOCX file: {str(exc)}') from exc
     else:
-        raise ResumeIntelligenceError('Unsupported resume format')
+        raise ResumeIntelligenceError('Unsupported resume format. Please upload a .pdf or .docx file.')
     cleaned = clean_resume_text(text)
     if not cleaned:
         raise ResumeIntelligenceError('No readable text found in resume')

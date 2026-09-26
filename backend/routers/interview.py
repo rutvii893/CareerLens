@@ -10,11 +10,22 @@ router = APIRouter(prefix='/interview', tags=['interview'])
 
 @router.post('/start', response_model=schemas.InterviewSessionRead)
 def start_interview(request: schemas.InterviewStartRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    resume = crud.get_resume(db, request.resume_id)
-    if resume is None or resume.user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found')
-    questions = generate_questions(resume, request.target_role, request.interview_type)
-    session = crud.create_interview_session(db, current_user.id, request.resume_id, request.target_role, questions)
+    resume = None
+    if request.resume_id is not None:
+        resume = crud.get_resume(db, request.resume_id)
+        if resume is None or resume.user_id != current_user.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found')
+    else:
+        # Check latest user resume
+        latest_ats = crud.get_latest_ats_result(db, current_user.id)
+        if latest_ats and latest_ats.resume:
+            resume = latest_ats.resume
+
+    user_db = crud.get_user(db, current_user.id)
+    custom_skills = list(user_db.custom_skills or []) if user_db else []
+
+    questions = generate_questions(resume, request.target_role, request.interview_type, custom_skills)
+    session = crud.create_interview_session(db, current_user.id, resume.id if resume else None, request.target_role, questions)
     return session
 
 
@@ -29,6 +40,12 @@ def evaluate_interview(request: schemas.InterviewEvaluateRequest, db: Session = 
     evaluation = evaluate_answer(question, request.answer_text)
     crud.save_interview_evaluation(db, session, request.question_id, request.answer_text, evaluation)
     return schemas.InterviewEvaluationResponse(session_id=session.id, question_id=request.question_id, **evaluation)
+
+
+@router.get('/sessions', response_model=list[schemas.InterviewSessionRead])
+def list_interview_sessions(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """List all interview prep sessions and evaluation scores for the current user."""
+    return crud.list_user_interview_sessions(db, current_user.id)
 
 
 @router.get('/{session_id}', response_model=schemas.InterviewSessionRead)

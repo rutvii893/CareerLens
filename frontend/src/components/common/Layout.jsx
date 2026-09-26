@@ -3,6 +3,8 @@ import Navbar from '../navbar/Navbar';
 import Sidebar from '../sidebar/Sidebar';
 
 const Layout = ({ children, hideSidebar = false, isLanding = false }) => {
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+
   return (
     <div className={`min-h-screen ${isLanding ? 'bg-transparent' : 'app-shell'}`}>
       <Navbar isLanding={isLanding} onMenuToggle={() => setSidebarOpen((open) => !open)} />
