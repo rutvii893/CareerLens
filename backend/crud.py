@@ -489,16 +489,59 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
     extracted = list(latest_ats.extracted_skills or []) if latest_ats else []
     custom = list(user.custom_skills or []) if user else []
     all_skills_unique = list(dict.fromkeys(extracted + custom))
+    user_skills_set = {s.lower() for s in all_skills_unique}
 
-    matches = []
-    if resume_id is not None:
-        matches = db.scalars(
-            select(models.JobMatch)
-            .where(models.JobMatch.resume_id == resume_id)
-            .order_by(desc(models.JobMatch.match_score))
-        ).all()
-    top_match = matches[0] if matches else None
+    # User target role & target score preferences
+    prefs = dict(user.preferences or {}) if user else {}
+    target_role = user.target_role.strip() if (user and user.target_role and user.target_role.strip()) else 'Full Stack Engineer'
+    target_score = float(prefs.get('target_score', 80.0))
+    skill_assessments = dict(prefs.get('skill_assessments') or {})
 
+    # Determine required skills for target role
+    from .services.career_intelligence import find_or_create_role, role_skills, DEFAULT_ROLE_PROFILES
+    role_obj = find_or_create_role(db, None, target_role)
+    req_skills = role_skills(role_obj) if role_obj and role_obj.skills else DEFAULT_ROLE_PROFILES.get(target_role, ['Python', 'JavaScript', 'React', 'SQL', 'Git', 'REST API', 'Docker'])
+
+    # Calculate skill gaps according to formula: max(0, Target - Current) / Target * 100
+    individual_gaps = []
+    assessed_items = []
+    extracted_lower = {s.lower() for s in extracted}
+    custom_lower = {s.lower() for s in custom}
+
+    for skill in req_skills:
+        s_lower = skill.lower()
+        if skill in skill_assessments:
+            c_score = float(skill_assessments[skill].get('current_score', 0.0))
+            t_score = float(skill_assessments[skill].get('target_score', target_score))
+            source_tag = 'assessed'
+        elif s_lower in extracted_lower:
+            c_score = 75.0
+            t_score = target_score
+            source_tag = 'resume'
+        elif s_lower in custom_lower:
+            c_score = 65.0
+            t_score = target_score
+            source_tag = 'custom'
+        else:
+            c_score = 0.0
+            t_score = target_score
+            source_tag = 'missing'
+
+        gap_pct = round(max(0.0, t_score - c_score) / t_score * 100.0, 1) if t_score > 0 else 0.0
+        individual_gaps.append(gap_pct)
+        status_label = 'meets_target' if c_score >= t_score else ('missing' if c_score == 0 else 'needs_improvement')
+        assessed_items.append({
+            'name': skill,
+            'current_score': c_score,
+            'target_score': t_score,
+            'gap_percentage': gap_pct,
+            'status': status_label,
+            'source': source_tag,
+        })
+
+    overall_skill_gap = round(sum(individual_gaps) / len(individual_gaps), 1) if individual_gaps else 0.0
+
+    # Roadmap and Interview performance
     roadmap = get_latest_career_roadmap(db, user_id, resume_id)
     interviews = list_user_interview_sessions(db, user_id)
     scored_interviews = [session.score for session in interviews if session.score is not None]
@@ -507,20 +550,64 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
     roadmap_items = roadmap.roadmap if roadmap else []
     completed_phases = sum(1 for item in roadmap_items if item.get('status') in {'completed', 'done'})
     roadmap_percentage = round((completed_phases / len(roadmap_items)) * 100, 2) if roadmap_items else 0.0
-    career_gap = list(roadmap.missing_skills or []) if roadmap else []
-    career_score = max(0.0, 100.0 - (len(career_gap) * 15.0)) if roadmap else 0.0
+    career_gap = list(roadmap.missing_skills or []) if roadmap else [item['name'] for item in assessed_items if item['status'] != 'meets_target']
+    career_score = max(0.0, 100.0 - overall_skill_gap)
+
+    # Recommended Jobs based on user's selected target role
+    role_keywords = [w.lower() for w in target_role.replace('-', ' ').replace('/', ' ').replace('_', ' ').split() if len(w) > 2]
+    all_db_jobs = db.scalars(select(models.Job).order_by(models.Job.posted_at.desc())).all()
+    scored_role_jobs = []
+
+    for j in all_db_jobs:
+        title_lower = (j.title or '').lower()
+        desc_lower = (j.description or '').lower()
+        is_role_match = any(kw in title_lower or kw in desc_lower for kw in role_keywords) if role_keywords else True
+
+        req_j = list(j.required_skills or [])
+        if not req_j:
+            req_j = req_skills[:5]
+
+        m_skills = [s for s in req_j if s.lower() in user_skills_set]
+        gap_skills = [s for s in req_j if s.lower() not in user_skills_set]
+        m_score = round((len(m_skills) / max(1, len(req_j))) * 100, 1) if req_j else 50.0
+
+        # Prioritize jobs matching the selected target role
+        relevance_weight = 1000 if is_role_match else 0
+        scored_role_jobs.append({
+            'job': j,
+            'is_role_match': is_role_match,
+            'match_score': m_score,
+            'matched_skills': m_skills,
+            'missing_skills': gap_skills,
+            'sort_key': relevance_weight + m_score,
+        })
+
+    scored_role_jobs.sort(key=lambda x: x['sort_key'], reverse=True)
+
+    recommended_jobs_list = []
+    for item in scored_role_jobs[:6]:
+        jb = item['job']
+        recommended_jobs_list.append({
+            'id': jb.id,
+            'title': jb.title,
+            'company': jb.company or 'Direct Employer',
+            'location': jb.location or 'Remote / Hybrid',
+            'match_score': item['match_score'],
+            'matched_skills': item['matched_skills'],
+            'missing_skills': item['missing_skills'],
+            'url': getattr(jb, 'redirect_url', None) or getattr(jb, 'url', None) or '/jobs',
+        })
 
     ats_score = float(latest_ats.overall_score or 0.0) if latest_ats else 0.0
-    job_score = float(top_match.match_score or 0.0) if top_match else 0.0
+    job_score = float(recommended_jobs_list[0]['match_score']) if recommended_jobs_list else 0.0
 
-    # Overall career readiness composite
+    # Composite Readiness Score calculation
     components = []
     if latest_ats:
         components.append(ats_score * 0.35)
-    if top_match:
+    if recommended_jobs_list:
         components.append(job_score * 0.20)
-    if roadmap:
-        components.append((career_score * 0.20) + (roadmap_percentage * 0.10))
+    components.append((career_score * 0.20) + (roadmap_percentage * 0.10))
     if scored_interviews:
         components.append(interview_average * 0.15)
     
@@ -558,63 +645,14 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
             'link': '/interview',
         })
 
-    # Target role and target score from user preferences
-    prefs = dict(user.preferences or {}) if user else {}
-    target_role = user.target_role if (user and user.target_role) else (roadmap.target_role if roadmap else 'Full Stack Engineer')
-    target_score = float(prefs.get('target_score', 80.0))
-    skill_assessments = dict(prefs.get('skill_assessments') or {})
-
-    # Determine required skills for target role
-    role_obj = db.scalar(select(models.CareerRole).where(models.CareerRole.name.ilike(target_role.strip())))
-    if role_obj and role_obj.skills:
-        req_skills = [s.skill_name for s in role_obj.skills]
-    else:
-        from .services.career_intelligence import DEFAULT_ROLE_PROFILES
-        req_skills = DEFAULT_ROLE_PROFILES.get(target_role, ['Python', 'JavaScript', 'React', 'SQL', 'Git', 'REST API', 'Docker'])
-
-    # Calculate skill gaps according to formula: max(0, Target - Current) / Target * 100
-    individual_gaps = []
-    assessed_items = []
-    extracted_lower = {s.lower() for s in extracted}
-    custom_lower = {s.lower() for s in custom}
-
-    for skill in req_skills:
-        s_lower = skill.lower()
-        if skill in skill_assessments:
-            c_score = float(skill_assessments[skill].get('current_score', 0.0))
-            t_score = float(skill_assessments[skill].get('target_score', target_score))
-        elif s_lower in extracted_lower:
-            c_score = 80.0
-            t_score = target_score
-        elif s_lower in custom_lower:
-            c_score = 70.0
-            t_score = target_score
-        else:
-            c_score = 0.0
-            t_score = target_score
-
-        gap_pct = round(max(0.0, t_score - c_score) / t_score * 100.0, 1) if t_score > 0 else 0.0
-        individual_gaps.append(gap_pct)
-        status_label = 'meets_target' if gap_pct == 0.0 else ('missing' if c_score == 0 else 'needs_improvement')
-        assessed_items.append({
-            'name': skill,
-            'current_score': c_score,
-            'target_score': t_score,
-            'gap_percentage': gap_pct,
-            'status': status_label,
-            'source': 'resume' if s_lower in extracted_lower else ('custom' if s_lower in custom_lower else 'missing')
-        })
-
-    overall_skill_gap = round(sum(individual_gaps) / len(individual_gaps), 1) if individual_gaps else 0.0
-
     # Service-specific breakdowns for Dashboard 14 master-detail views
     service_breakdowns = {
         'career_overview': {
             'title': 'Career Overview',
-            'subtitle': 'Composite signals across resume, skills, roadmap, and applications',
+            'subtitle': f'Telemetry signals for {target_role} across resume, skills, roadmap, and applications',
             'headline_metric': f'{Math_round_helper(readiness)}%',
             'headline_label': 'Career Readiness',
-            'chart_title': 'Career Readiness Component Breakdown',
+            'chart_title': 'Career Readiness Signal Breakdown',
             'chart_data': [
                 {'name': 'ATS Quality', 'value': Math_round_helper(ats_score), 'target': 100},
                 {'name': 'Job Match', 'value': Math_round_helper(job_score), 'target': 100},
@@ -669,7 +707,7 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
         },
         'job_intelligence': {
             'title': 'Job Intelligence',
-            'subtitle': 'Live Adzuna matching, application pipeline, and skill overlap',
+            'subtitle': f'Live matching for {target_role}, application pipeline, and skill overlap',
             'headline_metric': f'{Math_round_helper(job_score)}%',
             'headline_label': 'Top Job Match',
             'chart_title': 'Tracked Application Pipeline',
@@ -680,10 +718,10 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
                 {'name': 'Offers', 'value': sum(1 for a in applications if a.status == 'offer'), 'target': max(5, saved_count + applied_count)},
             ],
             'metrics': [
-                {'label': 'Best Job Match', 'value': f'{Math_round_helper(job_score)}%', 'subtext': top_match.job.title if (top_match and top_match.job) else 'No match'},
+                {'label': 'Best Match Score', 'value': f'{Math_round_helper(job_score)}%', 'subtext': recommended_jobs_list[0]['title'] if recommended_jobs_list else 'No jobs'},
                 {'label': 'Saved Jobs', 'value': str(saved_count), 'subtext': 'In tracker'},
                 {'label': 'Active Applications', 'value': str(applied_count), 'subtext': 'In review'},
-                {'label': 'Matching Skills', 'value': str(len(top_match.matched_skills or []) if top_match else 0), 'subtext': 'Skill overlap'},
+                {'label': 'Target Matching Skills', 'value': str(len(recommended_jobs_list[0]['matched_skills']) if recommended_jobs_list else 0), 'subtext': 'Skill overlap'},
             ]
         },
         'interview_prep': {
@@ -695,7 +733,7 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
             'chart_data': [
                 {'name': sess.target_role or f'Session {sess.id}', 'value': Math_round_helper(sess.score or 0), 'target': 100}
                 for sess in reversed(interviews[:6])
-            ] if interviews else [{'name': 'No sessions', 'value': 0, 'target': 100}],
+            ] if interviews else [{'name': 'No sessions yet', 'value': 0, 'target': 100}],
             'metrics': [
                 {'label': 'Average Score', 'value': f'{Math_round_helper(interview_average)}/100', 'subtext': 'Across all sessions'},
                 {'label': 'Completed Sessions', 'value': str(len(interviews)), 'subtext': 'Practice runs'},
@@ -722,44 +760,6 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
         }
     }
 
-    # Job recommendations with transparent matched skills and job-specific skill gaps
-    recommended_jobs_list = []
-    if matches:
-        for match in matches[:6]:
-            if match.job:
-                recommended_jobs_list.append({
-                    'id': match.job.id,
-                    'title': match.job.title,
-                    'company': match.job.company,
-                    'location': match.job.location or 'Remote / Hybrid',
-                    'match_score': match.match_score,
-                    'matched_skills': list(match.matched_skills or []),
-                    'missing_skills': list(match.missing_skills or []),
-                    'url': getattr(match.job, 'redirect_url', None) or getattr(match.job, 'url', None),
-                })
-    else:
-        # Fallback to recent jobs in DB matching user target role or keywords
-        db_jobs = db.scalars(select(models.Job).order_by(desc(models.Job.posted_at if hasattr(models.Job, 'posted_at') else models.Job.id)).limit(8)).all()
-        user_skills_set = {s.lower() for s in all_skills_unique}
-        for j in db_jobs:
-            req_j = list(j.required_skills or [])
-            if not req_j and role_obj:
-                req_j = req_skills[:5]
-            m_skills = [s for s in req_j if s.lower() in user_skills_set]
-            gap_skills = [s for s in req_j if s.lower() not in user_skills_set]
-            m_score = round((len(m_skills) / max(1, len(req_j))) * 100, 1)
-            recommended_jobs_list.append({
-                'id': j.id,
-                'title': j.title,
-                'company': j.company,
-                'location': j.location or 'Remote / Hybrid',
-                'match_score': m_score,
-                'matched_skills': m_skills,
-                'missing_skills': gap_skills,
-                'url': getattr(j, 'redirect_url', None) or getattr(j, 'url', None),
-            })
-
-
     return schemas.DashboardMetrics(
         readiness_score=readiness,
         recent_ats_score=ats_score,
@@ -768,9 +768,9 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
         extracted_skills=all_skills_unique,
         total_skills_count=len(all_skills_unique),
         resume_improvement=list(latest_ats.recommendations or []) if latest_ats else [],
-        job_match_percentage=job_score if top_match else (recommended_jobs_list[0]['match_score'] if recommended_jobs_list else 0.0),
-        matching_skills=list(top_match.matched_skills or []) if top_match else (recommended_jobs_list[0]['matched_skills'] if recommended_jobs_list else []),
-        missing_skills=list(top_match.missing_skills or []) if top_match else (recommended_jobs_list[0]['missing_skills'] if recommended_jobs_list else []),
+        job_match_percentage=job_score,
+        matching_skills=recommended_jobs_list[0]['matched_skills'] if recommended_jobs_list else [],
+        missing_skills=recommended_jobs_list[0]['missing_skills'] if recommended_jobs_list else [],
         recommended_jobs=recommended_jobs_list,
         career_skill_gap=career_gap,
         overall_skill_gap=overall_skill_gap,

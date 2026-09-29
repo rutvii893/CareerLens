@@ -83,11 +83,9 @@ def get_user_skills(db: Session = Depends(get_db), current_user: schemas.UserRea
     categorized = {k: v for k, v in categorized.items() if v}
 
     # Role required skills
-    role_obj = db.scalar(select(models.CareerRole).where(models.CareerRole.name.ilike(target_role.strip())))
-    if role_obj and role_obj.skills:
-        req_skills = [s.skill_name for s in role_obj.skills]
-    else:
-        req_skills = DEFAULT_ROLE_PROFILES.get(target_role, ['Python', 'JavaScript', 'React', 'SQL', 'Git', 'REST API', 'Docker'])
+    from ..services.career_intelligence import find_or_create_role, role_skills, DEFAULT_ROLE_PROFILES
+    role_obj = find_or_create_role(db, None, target_role)
+    req_skills = role_skills(role_obj) if role_obj and role_obj.skills else DEFAULT_ROLE_PROFILES.get(target_role, ['Python', 'JavaScript', 'React', 'SQL', 'Git', 'REST API', 'Docker'])
 
     # Build assessment items and calculate gap
     assessments = []
@@ -104,15 +102,19 @@ def get_user_skills(db: Session = Depends(get_db), current_user: schemas.UserRea
         if skill in skill_assessments:
             c_score = float(skill_assessments[skill].get('current_score', 0.0))
             t_score = float(skill_assessments[skill].get('target_score', target_score))
+            source_tag = 'assessed'
         elif s_lower in extracted_lower:
-            c_score = 80.0
+            c_score = 75.0
             t_score = target_score
+            source_tag = 'resume'
         elif s_lower in custom_lower:
-            c_score = 70.0
+            c_score = 65.0
             t_score = target_score
+            source_tag = 'custom'
         else:
             c_score = 0.0
             t_score = target_score
+            source_tag = 'missing'
 
         gap_pct = round(max(0.0, t_score - c_score) / t_score * 100.0, 1) if t_score > 0 else 0.0
         
@@ -120,7 +122,7 @@ def get_user_skills(db: Session = Depends(get_db), current_user: schemas.UserRea
         if skill in req_skills:
             individual_gaps.append(gap_pct)
 
-        status_label = 'meets_target' if gap_pct == 0.0 else ('missing' if c_score == 0 else 'needs_improvement')
+        status_label = 'meets_target' if c_score >= t_score else ('missing' if c_score == 0 else 'needs_improvement')
         
         # Category lookup
         skill_cat = 'Other'
@@ -136,7 +138,7 @@ def get_user_skills(db: Session = Depends(get_db), current_user: schemas.UserRea
             target_score=t_score,
             gap_percentage=gap_pct,
             status=status_label,
-            source='resume' if s_lower in extracted_lower else ('custom' if s_lower in custom_lower else 'missing')
+            source=source_tag,
         )
         assessments.append(item)
         if status_label == 'meets_target':
@@ -145,7 +147,7 @@ def get_user_skills(db: Session = Depends(get_db), current_user: schemas.UserRea
             skills_to_improve.append(item)
 
     overall_gap = round(sum(individual_gaps) / len(individual_gaps), 1) if individual_gaps else 0.0
-    role_matching = [s for s in req_skills if s.lower() in extracted_lower or s.lower() in custom_lower]
+    role_matching = [s for s in req_skills if s.lower() in extracted_lower or s.lower() in custom_lower or s in skill_assessments]
     role_missing = [s for s in req_skills if s not in role_matching]
     role_readiness = round((len(role_matching) / len(req_skills) * 100), 1) if req_skills else 0.0
 

@@ -76,7 +76,14 @@ def create_role(role_data: schemas.CareerRoleCreate, db: Session = Depends(get_d
 @router.post('/coach/ask', response_model=schemas.CareerCoachResponse)
 def ask_career_coach(request: schemas.CareerCoachRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
-        result = answer_career_question(db, current_user.id, request.question, request.resume_id, request.target_role)
+        result = answer_career_question(
+            db,
+            current_user.id,
+            request.question,
+            request.resume_id,
+            request.target_role,
+            request.history,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return schemas.CareerCoachResponse(**result)

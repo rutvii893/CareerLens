@@ -25,11 +25,12 @@ export const careerService = {
     const response = await api.get('/career/roadmaps');
     return response.data;
   },
-  askCoach: async (question, resumeId, targetRole) => {
+  askCoach: async (question, resumeId, targetRole, history = []) => {
     const response = await api.post('/career/coach/ask', {
       question,
       resume_id: resumeId || null,
       target_role: targetRole || null,
+      history: history || [],
     });
     return response.data;
   },

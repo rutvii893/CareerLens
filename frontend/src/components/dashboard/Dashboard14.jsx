@@ -49,7 +49,7 @@ const SERVICES = [
   { id: 'career_overview', label: 'Career Overview', icon: Target, badge: 'Summary', color: 'from-blue-600 to-indigo-600', textTone: 'text-blue-600', bgTone: 'bg-blue-50' },
   { id: 'resume_intelligence', label: 'Resume Intelligence', icon: FileText, badge: 'ATS Audit', color: 'from-purple-600 to-indigo-600', textTone: 'text-purple-600', bgTone: 'bg-purple-50' },
   { id: 'skills_gaps', label: 'Skills & Skill Gaps', icon: Sparkles, badge: 'Competency', color: 'from-amber-500 to-orange-600', textTone: 'text-amber-600', bgTone: 'bg-amber-50' },
-  { id: 'job_intelligence', label: 'Job Intelligence', icon: BriefcaseBusiness, badge: 'Adzuna Live', color: 'from-emerald-600 to-teal-600', textTone: 'text-emerald-600', bgTone: 'bg-emerald-50' },
+  { id: 'job_intelligence', label: 'Job Intelligence', icon: BriefcaseBusiness, badge: 'Target Role', color: 'from-emerald-600 to-teal-600', textTone: 'text-emerald-600', bgTone: 'bg-emerald-50' },
   { id: 'interview_prep', label: 'Interview Preparation', icon: MessageSquare, badge: 'AI Mock', color: 'from-rose-500 to-pink-600', textTone: 'text-rose-600', bgTone: 'bg-rose-50' },
   { id: 'career_roadmap', label: 'Career Roadmap', icon: Map, badge: 'Milestones', color: 'from-cyan-600 to-blue-600', textTone: 'text-cyan-600', bgTone: 'bg-cyan-50' },
 ];
@@ -108,7 +108,7 @@ export const Dashboard14 = ({
               <button
                 key={srv.id}
                 onClick={() => onSelectService(srv.id)}
-                className={`flex flex-col items-start p-4 rounded-2xl transition-all text-left relative group ${
+                className={`flex flex-col items-start p-4 rounded-2xl transition-all text-left relative group cursor-pointer ${
                   isSelected
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md ring-2 ring-blue-500/20'
                     : 'bg-slate-50/80 hover:bg-slate-100 text-slate-700 border border-slate-100'
@@ -147,7 +147,7 @@ export const Dashboard14 = ({
         </div>
       </div>
 
-      {/* Target Role & Skill Gap Goal Quick-Editor Bar (Light CareerLens Theme) */}
+      {/* Target Role & Skill Gap Goal Quick-Editor Bar */}
       <div className="bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-white border border-blue-200/80 rounded-3xl p-6 sm:p-8 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
@@ -165,8 +165,9 @@ export const Dashboard14 = ({
                 {metrics?.target_role || 'Full Stack Engineer'}
               </h2>
               <p className="text-xs text-slate-500 mt-1 max-w-xl font-inter">
-                Skill gaps, roadmap milestones, and interview simulations are benchmarked against a target proficiency score of{' '}
-                <strong className="text-slate-800 font-semibold">{metrics?.target_score || 80}%</strong>.
+                Skill gaps, roadmap milestones, and recommended jobs are dynamically synchronized for{' '}
+                <strong className="text-slate-800 font-semibold">{metrics?.target_role || 'Full Stack Engineer'}</strong> at a target benchmark of{' '}
+                <strong className="text-blue-600 font-semibold">{Math.round(metrics?.target_score || 80)}%</strong>.
               </p>
             </div>
           </div>
@@ -190,7 +191,7 @@ export const Dashboard14 = ({
 
             <button
               onClick={() => setEditingTarget(!editingTarget)}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200 flex items-center gap-1.5"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200 flex items-center gap-1.5 cursor-pointer"
             >
               <Sliders className="w-3.5 h-3.5 text-slate-500" />
               {editingTarget ? 'Close' : 'Adjust Target'}
@@ -207,7 +208,7 @@ export const Dashboard14 = ({
                 type="text"
                 value={targetRoleInput}
                 onChange={(e) => setTargetRoleInput(e.target.value)}
-                placeholder="e.g. Backend Engineer, Data Scientist"
+                placeholder="e.g. Backend Engineer, Frontend Engineer, Data Scientist"
                 className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-[#2563eb]"
               />
             </div>
@@ -226,7 +227,7 @@ export const Dashboard14 = ({
               <button
                 type="submit"
                 disabled={savingGoal}
-                className="w-full py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                className="w-full py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {savingGoal ? 'Saving...' : 'Update & Recalculate'}
               </button>
@@ -304,13 +305,26 @@ export const Dashboard14 = ({
                         <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#64748b' }} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#0f172a', fontSize: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                          formatter={(value) => [`${value}%`, 'Score']}
+                          formatter={(value) => [`${value}%`, 'Signal Score']}
                         />
                         <Bar dataKey="value" fill="#2563eb" radius={[8, 8, 0, 0]}>
                           {currentBreakdown.chart_data.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={['#2563eb', '#16a34a', '#e26d3d', '#7c3aed', '#0284c7'][index % 5]} />
                           ))}
                         </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : selectedService === 'job_intelligence' ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={currentBreakdown.chart_data} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#0f172a', fontSize: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                          formatter={(value) => [value, 'Applications']}
+                        />
+                        <Bar dataKey="value" fill="#16a34a" radius={[8, 8, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
@@ -321,6 +335,7 @@ export const Dashboard14 = ({
                         <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#64748b' }} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#0f172a', fontSize: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                          formatter={(value) => [`${value}%`, 'Score']}
                         />
                         <Bar dataKey="value" fill="#2563eb" radius={[8, 8, 0, 0]} />
                       </BarChart>
@@ -344,7 +359,7 @@ export const Dashboard14 = ({
                   <BriefcaseBusiness className="w-5 h-5 text-[#16a34a]" /> Matched Jobs for {metrics?.target_role || 'Target Role'}
                 </h3>
                 <p className="text-xs text-slate-500 font-inter mt-0.5">
-                  Live matched openings displaying matched skills and specific skill gaps for each role.
+                  Live openings matching <strong className="text-slate-700">{metrics?.target_role || 'your target role'}</strong> with transparent skill overlap and specific gaps to learn.
                 </p>
               </div>
               <Link
@@ -365,12 +380,28 @@ export const Dashboard14 = ({
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              job.tier === 'Direct Match'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                : job.tier === 'Adjacent Role'
+                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                : 'bg-slate-100 text-slate-700 border border-slate-200'
+                            }`}>
+                              {job.tier || 'Target Role Match'}
+                            </span>
+                          </div>
                           <h4 className="font-bold text-sm font-jakarta text-slate-900 line-clamp-1">{job.title}</h4>
                           <p className="text-xs text-slate-500 font-medium">{job.company || 'Direct employer'} • {job.location || 'Remote'}</p>
                         </div>
-                        <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 font-extrabold text-xs rounded-full shrink-0">
-                          {Math.round(job.match_score)}% match
-                        </span>
+                        <div className="text-right shrink-0">
+                          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 font-extrabold text-xs rounded-full inline-block">
+                            {Math.round(job.match_score)}% match
+                          </span>
+                          <span className="block text-[10px] text-slate-400 mt-0.5">
+                            {job.matched_skills?.length || 0}/{(job.matched_skills?.length || 0) + (job.missing_skills?.length || 0)} skills
+                          </span>
+                        </div>
                       </div>
 
                       {/* Matching Skills */}
@@ -411,7 +442,7 @@ export const Dashboard14 = ({
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      {job.url ? (
+                      {job.url && job.url.startsWith('http') ? (
                         <a
                           href={job.url}
                           target="_blank"
@@ -425,7 +456,7 @@ export const Dashboard14 = ({
                           View in Job Search &rarr;
                         </Link>
                       )}
-                      <Link to="/roadmap" className="font-semibold text-slate-500 hover:text-slate-800 text-[11px]">
+                      <Link to="/career/roadmap" className="font-semibold text-slate-500 hover:text-slate-800 text-[11px]">
                         Add gaps to roadmap
                       </Link>
                     </div>
@@ -499,7 +530,7 @@ export const Dashboard14 = ({
               </Link>
 
               <Link
-                to="/roadmap"
+                to="/career/roadmap"
                 className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-purple-50 text-slate-800 hover:text-purple-700 text-xs font-bold transition-all border border-slate-100 group"
               >
                 <span className="flex items-center gap-2.5">
@@ -509,7 +540,7 @@ export const Dashboard14 = ({
               </Link>
 
               <Link
-                to="/coach"
+                to="/career"
                 className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-cyan-50 text-slate-800 hover:text-cyan-700 text-xs font-bold transition-all border border-slate-100 group"
               >
                 <span className="flex items-center gap-2.5">
@@ -557,4 +588,3 @@ export const Dashboard14 = ({
 };
 
 export default Dashboard14;
-
