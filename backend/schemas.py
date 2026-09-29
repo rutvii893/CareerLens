@@ -366,6 +366,7 @@ class CareerCoachRequest(BaseModel):
     question: str = Field(..., min_length=3, max_length=4000)
     resume_id: Optional[int] = None
     target_role: Optional[str] = Field(None, min_length=2, max_length=255)
+    history: Optional[List[dict]] = None
 
 
 class CareerCoachResponse(BaseModel):

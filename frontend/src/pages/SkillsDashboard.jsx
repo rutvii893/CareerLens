@@ -42,7 +42,8 @@ const SkillsDashboard = () => {
   const [error, setError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all'); // all, improve, meets
+  const [activeFilter, setActiveFilter] = useState('all'); // all | improve | meets | required
+  const [activeCategory, setActiveCategory] = useState('all');
   const [editingGoal, setEditingGoal] = useState(false);
 
   const [targetRoleInput, setTargetRoleInput] = useState('');
@@ -97,10 +98,7 @@ const SkillsDashboard = () => {
     setActionMessage('');
     try {
       const trimmed = newSkill.trim();
-      await userService.addCustomSkill(trimmed);
-      if (newSkillProficiency > 0) {
-        await userService.updateSkillAssessment(trimmed, Number(newSkillProficiency), newSkillCategory);
-      }
+      await userService.addCustomSkill(trimmed, Number(newSkillProficiency));
       setNewSkill('');
       setActionMessage(`Added "${trimmed}" (${newSkillProficiency}% proficiency) to your profile.`);
       await fetchSkills();
@@ -127,7 +125,7 @@ const SkillsDashboard = () => {
 
   const handleUpdateProficiency = async (skillName, newProf) => {
     try {
-      await userService.updateSkillAssessment(skillName, Number(newProf));
+      await userService.updateSkillAssessment(skillName, Number(newProf), Number(targetScoreInput || 80));
       setActionMessage(`Updated ${skillName} proficiency to ${newProf}%.`);
       setActiveSkillModal(null);
       await fetchSkills();
@@ -147,39 +145,62 @@ const SkillsDashboard = () => {
   }
 
   const allSkills = skillsData?.all_skills || [];
-  const categorized = skillsData?.categorized_skills || {};
   const targetRole = skillsData?.target_role || 'Full Stack Engineer';
   const targetScore = skillsData?.target_score || 80;
   const overallSkillGap = skillsData?.overall_skill_gap_percentage || 0;
-  const skillsToImprove = skillsData?.skills_to_improve || [];
-  const skillsMeetingTarget = skillsData?.skills_meeting_target || [];
-  const assessments = skillsData?.assessments || {};
+  const assessmentsList = skillsData?.assessments || [];
 
-  // Build full skill objects with gap calculations
-  const enrichedSkills = allSkills.map((skillName) => {
-    const currentProf = assessments[skillName]?.current_proficiency ?? 50;
-    const isCustom = skillsData?.custom_skills?.includes(skillName);
-    const gap = targetScore > 0 ? Math.max(0, Math.round(((targetScore - currentProf) / targetScore) * 100)) : 0;
-    const meets = currentProf >= targetScore;
+  // Build lookup map of assessments
+  const assessmentsMap = {};
+  assessmentsList.forEach((item) => {
+    assessmentsMap[item.name.toLowerCase()] = item;
+  });
+
+  const roleMissingSet = new Set((skillsData?.role_missing_skills || []).map((s) => s.toLowerCase()));
+  const roleMatchingSet = new Set((skillsData?.role_matching_skills || []).map((s) => s.toLowerCase()));
+  const customSkillsSet = new Set((skillsData?.custom_skills || []).map((s) => s.toLowerCase()));
+  const extractedSkillsSet = new Set((skillsData?.extracted_skills || []).map((s) => s.toLowerCase()));
+
+  // Enrich all items
+  const enrichedSkills = assessmentsList.map((item) => {
+    const isCustom = customSkillsSet.has(item.name.toLowerCase());
+    const isExtracted = extractedSkillsSet.has(item.name.toLowerCase());
+    const isRequired = roleMissingSet.has(item.name.toLowerCase()) || roleMatchingSet.has(item.name.toLowerCase());
+    const meets = item.status === 'meets_target';
+
     return {
-      name: skillName,
-      current: currentProf,
-      target: targetScore,
-      gap,
+      name: item.name,
+      category: item.category || 'Other',
+      current: Math.round(item.current_score),
+      target: Math.round(item.target_score || targetScore),
+      gap: Math.round(item.gap_percentage),
+      status: item.status,
+      source: item.source,
       meets,
       isCustom,
-      category: assessments[skillName]?.category || 'General',
+      isExtracted,
+      isRequired,
     };
   });
 
-  // Filter skills based on query and status filter
+  const meetingCount = enrichedSkills.filter((s) => s.meets).length;
+  const improveCount = enrichedSkills.filter((s) => !s.meets).length;
+  const requiredCount = enrichedSkills.filter((s) => s.isRequired).length;
+
+  // Filter skills based on query, filter type, and category
   const filteredSkills = enrichedSkills.filter((s) => {
     const matchesQuery = s.name.toLowerCase().includes(searchQuery.toLowerCase());
     if (!matchesQuery) return false;
+
+    if (activeCategory !== 'all' && s.category !== activeCategory) return false;
+
     if (activeFilter === 'improve') return !s.meets;
     if (activeFilter === 'meets') return s.meets;
+    if (activeFilter === 'required') return s.isRequired;
     return true;
   });
+
+  const categories = ['all', 'Programming Languages', 'Frameworks & Libraries', 'Cloud & Databases', 'Tools & Methodologies', 'Other'];
 
   return (
     <div className="p-6 md:p-8 max-w-[1360px] mx-auto w-full space-y-8 animate-fadeIn">
@@ -203,7 +224,7 @@ const SkillsDashboard = () => {
           </button>
           <Link
             to="/resume"
-            className="px-4 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] text-white font-semibold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2"
+            className="px-4 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] hover:opacity-95 text-white font-semibold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2"
           >
             <UploadCloud className="w-4 h-4" /> Re-scan Resume
           </Link>
@@ -261,7 +282,7 @@ const SkillsDashboard = () => {
             <div className="text-center px-3">
               <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">Target Score</span>
               <span className="text-2xl font-extrabold text-blue-400 font-jakarta">
-                {targetScore}%
+                {Math.round(targetScore)}%
               </span>
             </div>
 
@@ -270,7 +291,7 @@ const SkillsDashboard = () => {
             <div className="text-center px-3">
               <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">Meeting Target</span>
               <span className="text-2xl font-extrabold text-emerald-400 font-jakarta">
-                {skillsMeetingTarget.length} / {allSkills.length}
+                {meetingCount} / {enrichedSkills.length}
               </span>
             </div>
 
@@ -293,7 +314,7 @@ const SkillsDashboard = () => {
                 type="text"
                 value={targetRoleInput}
                 onChange={(e) => setTargetRoleInput(e.target.value)}
-                placeholder="e.g. Backend Engineer, Frontend Engineer"
+                placeholder="e.g. Backend Engineer, Frontend Engineer, Data Scientist"
                 className="w-full px-3.5 py-2 bg-white/10 border border-white/20 rounded-xl text-xs font-semibold text-white focus:outline-none focus:border-blue-400"
               />
             </div>
@@ -312,7 +333,7 @@ const SkillsDashboard = () => {
               <button
                 type="submit"
                 disabled={savingTarget}
-                className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                className="w-full py-2 bg-[#2563eb] hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
               >
                 {savingTarget ? 'Saving...' : 'Save & Recalculate'}
               </button>
@@ -403,37 +424,67 @@ const SkillsDashboard = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-            <button
-              onClick={() => setActiveFilter('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                activeFilter === 'all'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              All Skills ({allSkills.length})
-            </button>
-            <button
-              onClick={() => setActiveFilter('improve')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeFilter === 'improve'
-                  ? 'bg-amber-600 text-white shadow-xs'
-                  : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
-              }`}
-            >
-              <TrendingDown className="w-3.5 h-3.5" /> Skills to Improve ({skillsToImprove.length})
-            </button>
-            <button
-              onClick={() => setActiveFilter('meets')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeFilter === 'meets'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-              }`}
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" /> Meets Target ({skillsMeetingTarget.length})
-            </button>
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            {/* Status filters */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setActiveFilter('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  activeFilter === 'all'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                All Evaluated ({enrichedSkills.length})
+              </button>
+              <button
+                onClick={() => setActiveFilter('required')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeFilter === 'required'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
+                }`}
+              >
+                <Target className="w-3.5 h-3.5" /> Target Role Required ({requiredCount})
+              </button>
+              <button
+                onClick={() => setActiveFilter('improve')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeFilter === 'improve'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
+                }`}
+              >
+                <TrendingDown className="w-3.5 h-3.5" /> Skills to Improve ({improveCount})
+              </button>
+              <button
+                onClick={() => setActiveFilter('meets')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeFilter === 'meets'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" /> Meets Target ({meetingCount})
+              </button>
+            </div>
+
+            {/* Category tabs */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                    activeCategory === cat
+                      ? 'bg-slate-200 text-slate-900 font-bold'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {cat === 'all' ? 'All Categories' : cat}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -456,8 +507,18 @@ const SkillsDashboard = () => {
                     <h3 className="text-sm font-bold font-jakarta text-slate-900 flex items-center gap-1.5">
                       {s.name}
                       {s.isCustom && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-md font-semibold">
+                        <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-md font-semibold">
                           Custom
+                        </span>
+                      )}
+                      {s.isExtracted && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-md font-semibold">
+                          Resume
+                        </span>
+                      )}
+                      {s.isRequired && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-md font-semibold">
+                          Required
                         </span>
                       )}
                     </h3>
@@ -468,23 +529,29 @@ const SkillsDashboard = () => {
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       s.meets
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : s.current === 0
+                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
                         : 'bg-amber-50 text-amber-700 border border-amber-200'
                     }`}
                   >
-                    {s.meets ? 'Meets Target' : `${s.gap}% Gap`}
+                    {s.meets ? 'Meets Target' : (s.current === 0 ? 'Missing Skill' : `${s.gap}% Gap`)}
                   </span>
                 </div>
 
                 {/* Proficiency Visual Bar */}
                 <div className="space-y-1.5 mb-4">
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500 font-medium">Current: <strong className="text-slate-800">{s.current}%</strong></span>
-                    <span className="text-slate-500 font-medium">Target: <strong className="text-blue-600">{s.target}%</strong></span>
+                    <span className="text-slate-500 font-medium">
+                      Current: <strong className="text-slate-800">{s.current}%</strong>
+                    </span>
+                    <span className="text-slate-500 font-medium">
+                      Target: <strong className="text-blue-600">{s.target}%</strong>
+                    </span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-2 rounded-full transition-all duration-300 ${
-                        s.meets ? 'bg-emerald-500' : 'bg-amber-500'
+                        s.meets ? 'bg-emerald-500' : (s.current === 0 ? 'bg-rose-400' : 'bg-amber-500')
                       }`}
                       style={{ width: `${Math.min(100, s.current)}%` }}
                     />
@@ -599,4 +666,3 @@ const SkillsDashboard = () => {
 };
 
 export default SkillsDashboard;
-

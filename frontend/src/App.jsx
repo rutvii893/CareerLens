@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/common/Layout';
 
 // Pages
@@ -26,17 +26,22 @@ function App() {
         <Route path="/login" element={<Layout hideSidebar><Login /></Layout>} />
         <Route path="/register" element={<Layout hideSidebar><Register /></Layout>} />
 
-        {/* Student Routes */}
+        {/* Student & Authenticated Routes */}
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/skills" element={<Layout><SkillsDashboard /></Layout>} />
         <Route path="/resume" element={<Layout><ResumeAnalyzer /></Layout>} />
         <Route path="/resume/analysis" element={<Layout><ResumeAnalysis /></Layout>} />
         <Route path="/jobs" element={<Layout><JobRecommendations /></Layout>} />
         <Route path="/career" element={<Layout><CareerCoach /></Layout>} />
+        <Route path="/coach" element={<Layout><CareerCoach /></Layout>} />
         <Route path="/career/roadmap" element={<Layout><CareerRoadmap /></Layout>} />
+        <Route path="/roadmap" element={<Layout><CareerRoadmap /></Layout>} />
         <Route path="/interview" element={<Layout><InterviewPrep /></Layout>} />
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
         <Route path="/settings" element={<Layout><Settings /></Layout>} />
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

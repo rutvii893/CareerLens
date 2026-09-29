@@ -10,13 +10,17 @@ from .resume_intelligence import clean_resume_text, cosine_similarity, create_em
 
 DEFAULT_ROLE_PROFILES = {
     'Backend Engineer': ['Python', 'FastAPI', 'SQL', 'PostgreSQL', 'REST API', 'Docker', 'Git', 'Redis', 'Microservices'],
+    'Backend Developer': ['Python', 'FastAPI', 'SQL', 'PostgreSQL', 'REST API', 'Docker', 'Git', 'Redis', 'Microservices'],
     'Frontend Engineer': ['JavaScript', 'TypeScript', 'React', 'HTML', 'CSS', 'Git', 'REST API', 'Next.js', 'Tailwind CSS'],
+    'Frontend Developer': ['JavaScript', 'TypeScript', 'React', 'HTML', 'CSS', 'Git', 'REST API', 'Next.js', 'Tailwind CSS'],
     'Full Stack Engineer': ['JavaScript', 'TypeScript', 'React', 'Python', 'FastAPI', 'PostgreSQL', 'Docker', 'Git', 'REST API', 'Node.js'],
+    'Full Stack Developer': ['JavaScript', 'TypeScript', 'React', 'Python', 'FastAPI', 'PostgreSQL', 'Docker', 'Git', 'REST API', 'Node.js'],
     'Data Scientist': ['Python', 'Pandas', 'NumPy', 'Machine Learning', 'Deep Learning', 'PyTorch', 'TensorFlow', 'SQL', 'Scikit-Learn'],
     'Data Analyst': ['SQL', 'Python', 'Excel', 'Tableau', 'Power BI', 'Data Visualization', 'Pandas'],
+    'AI/ML Engineer': ['Python', 'PyTorch', 'TensorFlow', 'Machine Learning', 'Deep Learning', 'NLP', 'FastAPI', 'Docker', 'Pandas'],
     'Product Designer': ['Figma', 'UI/UX Design', 'User Research', 'Wireframing', 'Prototyping', 'Product Strategy', 'Agile'],
     'DevOps Engineer': ['Docker', 'Kubernetes', 'AWS', 'CI/CD', 'Linux', 'Git', 'Terraform', 'Monitoring'],
-    'Software Engineer': ['Data Structures', 'Algorithms', 'Git', 'SQL', 'Python', 'JavaScript', 'System Design'],
+    'Software Engineer': ['Data Structures', 'Algorithms', 'Git', 'SQL', 'Python', 'JavaScript', 'System Design', 'REST API'],
 }
 
 
