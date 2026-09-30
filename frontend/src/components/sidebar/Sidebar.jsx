@@ -65,7 +65,7 @@ const Sidebar = ({ open = false, onClose }) => {
       )}
 
       <aside
-        className={`fixed left-0 top-[64px] w-64 h-[calc(100vh-64px)] bg-white/95 backdrop-blur-md border-r border-[#e2e8f0] flex flex-col py-6 px-4 z-40 transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-[64px] w-64 h-[calc(100vh-64px)] bg-white/95 backdrop-blur-md border-r border-[#e2e8f0] flex flex-col py-6 px-4 z-40 overflow-hidden transition-transform duration-300 ease-in-out ${
           open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
@@ -83,41 +83,28 @@ const Sidebar = ({ open = false, onClose }) => {
           </button>
         </div>
 
-        {/* Target Goal Pill Badge */}
-        <div className="mb-4 px-3 py-2 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-center justify-between">
-          <div className="min-w-0">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-blue-600 block">
-              Active Focus
-            </span>
-            <p className="text-xs font-extrabold text-slate-800 truncate">
-              {targetRole || 'Full Stack Engineer'}
-            </p>
-          </div>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-        </div>
-
         {/* React Bits LineSidebar Navigation */}
-        <div className="flex-1 overflow-y-auto pr-1">
-          <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1 pt-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">
             Workspace Modules
           </div>
 
           <LineSidebar
             items={NAV_ITEMS.map((item) => item.name)}
             accentColor="#2563eb"
-            textColor="#64748b"
+            textColor="#475569"
             markerColor="#cbd5e1"
             showIndex={true}
             showMarker={true}
-            proximityRadius={85}
-            maxShift={18}
+            proximityRadius={80}
+            maxShift={6}
             falloff="smooth"
-            markerLength={32}
-            markerGap={6}
+            markerLength={18}
+            markerGap={4}
             tickScale={0.5}
             scaleTick={true}
-            itemGap={14}
-            fontSize={0.84}
+            itemGap={16}
+            fontSize={0.92}
             smoothing={100}
             active={activeIdx}
             onItemClick={handleItemClick}
@@ -126,29 +113,29 @@ const Sidebar = ({ open = false, onClose }) => {
         </div>
 
         {/* User Account & Preferences */}
-        <div className="mt-auto pt-4 border-t border-[#e2e8f0] space-y-1">
+        <div className="mt-auto pt-4 border-t border-[#e2e8f0] space-y-1.5">
           <Link
             to="/profile"
             onClick={onClose}
-            className={`flex items-center gap-2.5 px-3.5 py-2 rounded-xl font-inter text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-inter text-sm font-semibold transition-all ${
               location.pathname === '/profile'
                 ? 'bg-blue-50 text-[#2563eb] border border-blue-200/80 shadow-xs'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            <User size={15} className={location.pathname === '/profile' ? 'text-[#2563eb]' : 'text-slate-400'} />
+            <User size={17} className={location.pathname === '/profile' ? 'text-[#2563eb]' : 'text-slate-400'} />
             <span>My Profile</span>
           </Link>
           <Link
             to="/settings"
             onClick={onClose}
-            className={`flex items-center gap-2.5 px-3.5 py-2 rounded-xl font-inter text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-inter text-sm font-semibold transition-all ${
               location.pathname === '/settings'
                 ? 'bg-blue-50 text-[#2563eb] border border-blue-200/80 shadow-xs'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            <Settings size={15} className={location.pathname === '/settings' ? 'text-[#2563eb]' : 'text-slate-400'} />
+            <Settings size={17} className={location.pathname === '/settings' ? 'text-[#2563eb]' : 'text-slate-400'} />
             <span>Settings</span>
           </Link>
         </div>

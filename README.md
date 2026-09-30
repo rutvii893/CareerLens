@@ -1,55 +1,55 @@
-# CareerLens — AI Resume Screening & Career Coach 🎯
+# CareerLens — AI Resume Screening & Career Coach
 
 > **CareerLens** is an intelligent, full-stack career navigation and acceleration platform. It empowers students, developers, and professionals to audit resumes against ATS standards, align with specific target career roles, discover matched live vacancies via Adzuna, close skill gaps through phased learning roadmaps, practice with AI mock interviews, and receive personalized guidance from an AI Career Coach.
 
 ---
 
-## 🌟 Core System Modules
+## Core System Modules
 
-### 1. 🎯 Target-Role Career Intelligence & Recommendation Engine
+### 1. Target-Role Career Intelligence & Recommendation Engine
 * **Target-Role Centric Job Matching**: Prioritizes genuine role relevance first (e.g. *Data Engineer*, *ETL Developer*, *Data Platform Engineer*) before evaluating skill overlap, ensuring candidates are recommended real opportunities aligned with their career trajectory.
 * **Separation of Role Relevance & Skill Overlap**: Distinctly evaluates whether a vacancy belongs to the candidate's career domain (`Direct Match` vs `Related Opportunity`) while providing a transparent skill match percentage (`XX% skill match`).
 * **Global Target Role Synchronization**: Instant real-time state synchronization across all modules (Dashboard, Skills Matrix, Learning Roadmap, Mock Interview Prep, and Career Coach).
 
-### 2. 📊 Executive Career Readiness Dashboard
+### 2. Executive Career Readiness Dashboard
 * **Real-Time Composite Readiness Score**: Weighted readiness score integrating ATS audit results (35%), target-role job match (20%), skill gap closure (20%), roadmap progress (10%), and mock interview performance (15%).
 * **Curated Job Recommendations**: Displays the top 1–2 most relevant openings with itemized matched skills and missing competencies to learn.
 * **Chronological Activity Feed**: Tracks uploaded resumes, job applications, and completed mock interview evaluations.
 * **Proximity-Driven LineSidebar**: Smooth interactive navigation with vertical cursor proximity animations.
 
-### 3. 📑 Resume Intelligence & ATS Diagnostics
+### 3. Resume Intelligence & ATS Diagnostics
 * **Multi-Format Document Parsing**: High-fidelity text extraction from both `.pdf` and `.docx` resumes.
 * **Comprehensive Section & Keyword Audit**: Analyzes summary, work experience, education, skills, and projects with structural scoring and keyword density metrics.
 * **Job-Specific ATS Match Comparator**: Test any resume against custom target job descriptions to identify missing keywords and formatting improvements.
 
-### 4. 🧩 My Skills & Competency Matrix
+### 4. My Skills & Competency Matrix
 * **Automated Skill Extraction**: Automatically parses programming languages, frameworks, cloud platforms, databases, and engineering methodologies.
 * **Custom Skills Management**: Add or remove specialized competencies with custom proficiency ratings and persistent database storage.
 * **Live Skill Gap Calculation**: Side-by-side comparison between candidate skills and target role requirements.
 
-### 5. 💼 Live Adzuna Job Search & Application Tracker
+### 5. Live Adzuna Job Search & Application Tracker
 * **Direct Adzuna API Integration**: Search thousands of live vacancies with filters for title, keywords, location, country code, and salary range.
 * **Personalized Skill Match Scoring**: Real-time evaluation of job requirements against verified resume skills.
 * **1-Click Application Tracker**: Save jobs and manage pipeline status (`Saved`, `Applied`, `Interviewing`, `Offer Received`, `Archived`) with personal notes.
 
-### 6. 🗺️ Phased Learning Roadmap
+### 6. Phased Learning Roadmap
 * **Personalized Curriculum Generation**: Auto-generates structured milestones designed to close detected skill gaps.
 * **Verified Baseline Recognition**: Credits existing strengths in Phase 1 and schedules missing competencies in sequential learning phases.
 * **Interactive Milestone Tracking**: Check off completed learning phases with instant database persistence and progress recalculation.
 
-### 7. 🎙️ AI Mock Interview Simulator
+### 7. AI Mock Interview Simulator
 * **Role-Specific Question Generation**: Dynamically serves technical and behavioral interview questions tailored to the candidate's target role.
 * **Instant Evaluation & Scoring**: Evaluates candidate responses out of 100 with identified strengths, missing points, and actionable improvement feedback.
 * **Session History & Analytics**: Revisit past interview sessions to track performance improvement over time.
 
-### 8. 🤖 Context-Aware AI Career Coach
+### 8. Context-Aware AI Career Coach
 * **Personalized Mentorship**: Leverages the user's analyzed resume, detected skills, target role, and roadmap to provide tailored advice.
 * **Powered by Gemini AI**: Integrates Google Gemini with deterministic heuristic fallbacks for high reliability.
 * **Prompt Acceleration Chips**: 1-click prompt chips for rapid guidance on portfolio projects, resume optimization, and interview preparation.
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 graph TD
@@ -94,7 +94,7 @@ graph TD
 
 ---
 
-## 💻 Tech Stack
+## Tech Stack
 
 | Layer | Technologies |
 |---|---|
@@ -106,7 +106,7 @@ graph TD
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```text
 CareerLens/
@@ -158,7 +158,7 @@ CareerLens/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 * Python 3.10+
@@ -237,7 +237,7 @@ CareerLens/
 
 ---
 
-## 🧪 Testing & Verification
+## Testing & Verification
 
 ### Run Backend Automated Tests
 ```powershell
@@ -253,7 +253,7 @@ npm run build
 
 ---
 
-## 📡 API Endpoint Reference
+## API Endpoint Reference
 
 | HTTP Method | Endpoint | Description |
 |---|---|---|
@@ -283,6 +283,6 @@ npm run build
 
 ---
 
-## 🛡️ License
+## License
 Distributed under the **MIT License**.
-Built with ❤️ for career acceleration.
+Built for career acceleration.
