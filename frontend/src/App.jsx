@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/common/Layout';
+import { UserProvider } from './context/UserContext';
 
 // Pages
 import Home from './pages/Home';
@@ -20,29 +21,31 @@ import Settings from './pages/Settings';
 function App() {
   return (
     <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Layout hideSidebar isLanding><Home /></Layout>} />
-        <Route path="/login" element={<Layout hideSidebar><Login /></Layout>} />
-        <Route path="/register" element={<Layout hideSidebar><Register /></Layout>} />
+      <UserProvider>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Layout hideSidebar isLanding><Home /></Layout>} />
+          <Route path="/login" element={<Layout hideSidebar><Login /></Layout>} />
+          <Route path="/register" element={<Layout hideSidebar><Register /></Layout>} />
 
-        {/* Student & Authenticated Routes */}
-        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-        <Route path="/skills" element={<Layout><SkillsDashboard /></Layout>} />
-        <Route path="/resume" element={<Layout><ResumeAnalyzer /></Layout>} />
-        <Route path="/resume/analysis" element={<Layout><ResumeAnalysis /></Layout>} />
-        <Route path="/jobs" element={<Layout><JobRecommendations /></Layout>} />
-        <Route path="/career" element={<Layout><CareerCoach /></Layout>} />
-        <Route path="/coach" element={<Layout><CareerCoach /></Layout>} />
-        <Route path="/career/roadmap" element={<Layout><CareerRoadmap /></Layout>} />
-        <Route path="/roadmap" element={<Layout><CareerRoadmap /></Layout>} />
-        <Route path="/interview" element={<Layout><InterviewPrep /></Layout>} />
-        <Route path="/profile" element={<Layout><Profile /></Layout>} />
-        <Route path="/settings" element={<Layout><Settings /></Layout>} />
+          {/* Student & Authenticated Routes */}
+          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/skills" element={<Layout><SkillsDashboard /></Layout>} />
+          <Route path="/resume" element={<Layout><ResumeAnalyzer /></Layout>} />
+          <Route path="/resume/analysis" element={<Layout><ResumeAnalysis /></Layout>} />
+          <Route path="/jobs" element={<Layout><JobRecommendations /></Layout>} />
+          <Route path="/career" element={<Layout><CareerCoach /></Layout>} />
+          <Route path="/coach" element={<Layout><CareerCoach /></Layout>} />
+          <Route path="/career/roadmap" element={<Layout><CareerRoadmap /></Layout>} />
+          <Route path="/roadmap" element={<Layout><CareerRoadmap /></Layout>} />
+          <Route path="/interview" element={<Layout><InterviewPrep /></Layout>} />
+          <Route path="/profile" element={<Layout><Profile /></Layout>} />
+          <Route path="/settings" element={<Layout><Settings /></Layout>} />
 
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </UserProvider>
     </Router>
   );
 }

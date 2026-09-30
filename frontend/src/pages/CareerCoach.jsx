@@ -19,6 +19,7 @@ import {
   User,
   Zap,
 } from 'lucide-react';
+import { useUser } from '../context/UserContext';
 import { careerService } from '../services/careerService';
 import { userService } from '../services/userService';
 
@@ -77,8 +78,9 @@ const MarkdownRenderer = ({ content }) => {
 
 const CareerCoach = () => {
   const [searchParams] = useSearchParams();
+  const { targetRole: globalTargetRole, updateTargetGoal } = useUser();
   const [resumeId, setResumeId] = useState(searchParams.get('resumeId') || '');
-  const [targetRole, setTargetRole] = useState(searchParams.get('targetRole') || '');
+  const [targetRole, setTargetRole] = useState(searchParams.get('targetRole') || globalTargetRole || '');
   const [question, setQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -87,13 +89,16 @@ const CareerCoach = () => {
   const inputRef = useRef(null);
 
   useEffect(() => {
+    if (globalTargetRole && (!targetRole || targetRole !== globalTargetRole)) {
+      setTargetRole(globalTargetRole);
+    }
+  }, [globalTargetRole]);
+
+  useEffect(() => {
     userService.getDashboardMetrics()
       .then((data) => {
         if (data.active_resume_id && !resumeId) {
           setResumeId(String(data.active_resume_id));
-        }
-        if (data.target_role && !targetRole) {
-          setTargetRole(data.target_role);
         }
       })
       .catch(() => {});
@@ -207,6 +212,11 @@ const CareerCoach = () => {
             type="text"
             value={targetRole}
             onChange={(e) => setTargetRole(e.target.value)}
+            onBlur={() => {
+              if (targetRole.trim() && targetRole.trim() !== globalTargetRole) {
+                updateTargetGoal(targetRole.trim());
+              }
+            }}
             placeholder="Target role (e.g. Data Engineer, Backend Developer)"
             className="flex-1 px-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#2563eb] focus:bg-white transition-all"
           />
