@@ -497,8 +497,11 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
     target_score = float(prefs.get('target_score', 80.0))
     skill_assessments = dict(prefs.get('skill_assessments') or {})
 
+    from .services.career_intelligence import ensure_default_benchmark_jobs, ensure_default_roles, find_or_create_role, role_skills, DEFAULT_ROLE_PROFILES
+    ensure_default_roles(db)
+    ensure_default_benchmark_jobs(db)
+
     # Determine required skills for target role
-    from .services.career_intelligence import find_or_create_role, role_skills, DEFAULT_ROLE_PROFILES
     role_obj = find_or_create_role(db, None, target_role)
     req_skills = role_skills(role_obj) if role_obj and role_obj.skills else DEFAULT_ROLE_PROFILES.get(target_role, ['Python', 'JavaScript', 'React', 'SQL', 'Git', 'REST API', 'Docker'])
 
@@ -549,21 +552,25 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
 
     roadmap_items = roadmap.roadmap if roadmap else []
     completed_phases = sum(1 for item in roadmap_items if item.get('status') in {'completed', 'done'})
-    roadmap_percentage = round((completed_phases / len(roadmap_items)) * 100, 2) if roadmap_items else 0.0
+    roadmap_percentage = round((completed_phases / len(roadmap_items)) * 100, 1) if roadmap_items else 0.0
     career_gap = list(roadmap.missing_skills or []) if roadmap else [item['name'] for item in assessed_items if item['status'] != 'meets_target']
     career_score = max(0.0, 100.0 - overall_skill_gap)
 
-    # Recommended Jobs based on user's selected target role
-    role_keywords = [w.lower() for w in target_role.replace('-', ' ').replace('/', ' ').replace('_', ' ').split() if len(w) > 2]
+    # Recommended Jobs based primarily on user's selected target role
+    from .services.career_intelligence import evaluate_target_role_relevance
     all_db_jobs = db.scalars(select(models.Job).order_by(models.Job.posted_at.desc())).all()
     scored_role_jobs = []
 
     for j in all_db_jobs:
-        title_lower = (j.title or '').lower()
-        desc_lower = (j.description or '').lower()
-        is_role_match = any(kw in title_lower or kw in desc_lower for kw in role_keywords) if role_keywords else True
+        relevance = evaluate_target_role_relevance(j.title or '', j.description or '', target_role)
+        tier = relevance['tier']
+        relevance_score = relevance['relevance_score']
 
-        req_j = list(j.required_skills or [])
+        # Discard completely unrelated roles (e.g. Frontend when target is Data Engineer)
+        if tier == 'Unrelated' or relevance_score <= 0.0:
+            continue
+
+        req_j = [s.skill_name for s in j.skills] if j.skills else list(j.required_skills or [])
         if not req_j:
             req_j = req_skills[:5]
 
@@ -571,21 +578,34 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
         gap_skills = [s for s in req_j if s.lower() not in user_skills_set]
         m_score = round((len(m_skills) / max(1, len(req_j))) * 100, 1) if req_j else 50.0
 
-        # Prioritize jobs matching the selected target role
-        relevance_weight = 1000 if is_role_match else 0
+        # Direct Match gets highest priority weight, followed by Related Opportunity
+        relevance_weight = 10000 if tier == 'Direct Match' else 1000
+
         scored_role_jobs.append({
             'job': j,
-            'is_role_match': is_role_match,
+            'is_direct': relevance['is_direct'],
+            'tier': tier,
             'match_score': m_score,
             'matched_skills': m_skills,
             'missing_skills': gap_skills,
             'sort_key': relevance_weight + m_score,
         })
 
+    # Rank by role relevance priority first, then skill match score descending
     scored_role_jobs.sort(key=lambda x: x['sort_key'], reverse=True)
 
+    # Strictly limit to top 1-2 curated jobs (Direct Match prioritized)
+    direct_jobs = [item for item in scored_role_jobs if item['tier'] == 'Direct Match']
+    related_jobs = [item for item in scored_role_jobs if item['tier'] == 'Related Opportunity']
+
+    curated_jobs = []
+    if direct_jobs:
+        curated_jobs.extend(direct_jobs[:2])
+    elif related_jobs:
+        curated_jobs.extend(related_jobs[:2])
+
     recommended_jobs_list = []
-    for item in scored_role_jobs[:6]:
+    for item in curated_jobs[:2]:
         jb = item['job']
         recommended_jobs_list.append({
             'id': jb.id,
@@ -595,6 +615,7 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
             'match_score': item['match_score'],
             'matched_skills': item['matched_skills'],
             'missing_skills': item['missing_skills'],
+            'tier': item['tier'],
             'url': getattr(jb, 'redirect_url', None) or getattr(jb, 'url', None) or '/jobs',
         })
 

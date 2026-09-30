@@ -19,13 +19,15 @@ import {
   UserCheck,
   XCircle,
 } from 'lucide-react';
+import { useUser } from '../context/UserContext';
 import { interviewService } from '../services/interviewService';
 import { userService } from '../services/userService';
 
 const InterviewPrep = () => {
   const [searchParams] = useSearchParams();
+  const { targetRole: globalTargetRole } = useUser();
   const [resumeId, setResumeId] = useState(searchParams.get('resumeId') || '');
-  const [targetRole, setTargetRole] = useState(searchParams.get('targetRole') || '');
+  const [targetRole, setTargetRole] = useState(searchParams.get('targetRole') || globalTargetRole || '');
   const [interviewType, setInterviewType] = useState('Mixed');
   const [activeTab, setActiveTab] = useState('practice'); // 'practice' | 'history'
 
@@ -38,19 +40,22 @@ const InterviewPrep = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (globalTargetRole && (!targetRole || targetRole !== globalTargetRole)) {
+      setTargetRole(globalTargetRole);
+    }
+  }, [globalTargetRole]);
+
+  useEffect(() => {
     userService.getDashboardMetrics()
       .then((data) => {
         if (data.active_resume_id && !resumeId) {
           setResumeId(String(data.active_resume_id));
         }
-        if (data.roadmap_progress?.target_role && !targetRole) {
-          setTargetRole(data.roadmap_progress.target_role);
-        }
       })
       .catch(() => {});
 
     fetchHistory();
-  }, []);
+  }, [globalTargetRole]);
 
   const fetchHistory = async () => {
     try {

@@ -25,6 +25,7 @@ import {
   Check
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { useUser } from '../context/UserContext';
 import { jobService } from '../services/jobService';
 import { userService } from '../services/userService';
 
@@ -48,10 +49,11 @@ const STATUS_CONFIG = {
 
 const JobRecommendations = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { targetRole: globalTargetRole } = useUser();
   const [activeTab, setActiveTab] = useState('live'); // 'live' | 'saved' | 'internal'
 
   // Live Adzuna Search State
-  const [query, setQuery] = useState(searchParams.get('q') || 'Software Engineer');
+  const [query, setQuery] = useState(searchParams.get('q') || globalTargetRole || 'Software Engineer');
   const [location, setLocation] = useState(searchParams.get('loc') || '');
   const [country, setCountry] = useState(searchParams.get('country') || 'in');
   const [salaryMin, setSalaryMin] = useState(searchParams.get('min_salary') || '');
@@ -84,6 +86,13 @@ const JobRecommendations = () => {
   const [internalLoading, setInternalLoading] = useState(false);
   const [internalError, setInternalError] = useState('');
 
+  // Update query when globalTargetRole changes if user hasn't explicitly set a query
+  useEffect(() => {
+    if (globalTargetRole && !searchParams.get('q')) {
+      setQuery(globalTargetRole);
+    }
+  }, [globalTargetRole]);
+
   // Initial load
   useEffect(() => {
     fetchLiveJobs(1);
@@ -95,7 +104,7 @@ const JobRecommendations = () => {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [globalTargetRole]);
 
   const fetchLiveJobs = async (targetPage = 1) => {
     setLiveLoading(true);
@@ -661,12 +670,44 @@ const JobRecommendations = () => {
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="font-bold font-jakarta text-slate-900 text-base">{item.job.title}</h3>
-                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 font-bold text-xs rounded-full">
-                        {Math.round(item.match_score)}%
+                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs rounded-full shrink-0">
+                        {Math.round(item.match_score)}% match
                       </span>
                     </div>
                     <p className="text-xs text-slate-500">{item.job.company || 'Standard Role Benchmark'}</p>
-                    <p className="text-xs text-slate-600 mt-3 line-clamp-3">{item.job.description}</p>
+                    <p className="text-xs text-slate-600 mt-2.5 line-clamp-2">{item.job.description}</p>
+
+                    {/* Matched Skills */}
+                    {item.matched_skills?.length > 0 && (
+                      <div className="mt-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
+                          Matched Skills ({item.matched_skills.length}):
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {item.matched_skills.map((s) => (
+                            <span key={s} className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-semibold rounded">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Missing Skills */}
+                    {item.missing_skills?.length > 0 && (
+                      <div className="mt-2.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
+                          Skill Gaps to Benchmark ({item.missing_skills.length}):
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {item.missing_skills.map((s) => (
+                            <span key={s} className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold rounded">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </article>
               ))}

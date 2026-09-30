@@ -19,19 +19,27 @@ import {
   Target,
   UploadCloud,
 } from 'lucide-react';
+import { useUser } from '../context/UserContext';
 import { careerService } from '../services/careerService';
 import { userService } from '../services/userService';
 
 const CareerRoadmap = () => {
   const [searchParams] = useSearchParams();
+  const { targetRole: globalTargetRole, updateTargetGoal } = useUser();
   const [resumeId, setResumeId] = useState(searchParams.get('resumeId') || '');
-  const [targetRole, setTargetRole] = useState(searchParams.get('targetRole') || '');
+  const [targetRole, setTargetRole] = useState(searchParams.get('targetRole') || globalTargetRole || '');
   const [availableRoles, setAvailableRoles] = useState([]);
   const [roadmap, setRoadmap] = useState(null);
   const [loading, setLoading] = useState(false);
   const [updatingPhase, setUpdatingPhase] = useState(null);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    if (globalTargetRole && (!targetRole || targetRole !== globalTargetRole)) {
+      setTargetRole(globalTargetRole);
+    }
+  }, [globalTargetRole]);
 
   useEffect(() => {
     // Load available roles from API
@@ -49,15 +57,12 @@ const CareerRoadmap = () => {
         if (data.active_resume_id && !resumeId) {
           setResumeId(String(data.active_resume_id));
         }
-        if (data.target_role && !targetRole) {
-          setTargetRole(data.target_role);
-        }
-        if (data.roadmap_progress?.id || data.active_resume_id) {
-          loadRoadmap(data.active_resume_id);
-        }
+        loadRoadmap(data.active_resume_id);
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        loadRoadmap();
+      });
+  }, [globalTargetRole]);
 
   const loadRoadmap = async (rId) => {
     const idToUse = rId || resumeId;
@@ -89,6 +94,7 @@ const CareerRoadmap = () => {
     setError('');
     setSuccessMsg('');
     try {
+      await updateTargetGoal(targetRole.trim());
       const data = await careerService.createRoadmap(resumeId ? Number(resumeId) : null, targetRole.trim());
       setRoadmap(data);
       setSuccessMsg(`Generated milestone roadmap for ${targetRole.trim()}!`);
