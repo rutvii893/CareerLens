@@ -1,13 +1,13 @@
 .line-sidebar {
   --accent-color: #2563eb;
-  --text-color: #64748b;
+  --text-color: #475569;
   --marker-color: #cbd5e1;
-  --marker-length: 40px;
-  --marker-gap: 8px;
+  --marker-length: 18px;
+  --marker-gap: 4px;
   --tick-scale: 0.5;
-  --max-shift: 16px;
-  --item-gap: 14px;
-  --font-size: 0.85rem;
+  --max-shift: 6px;
+  --item-gap: 16px;
+  --font-size: 0.92rem;
   --smoothing: 100ms;
 
   position: relative;
@@ -23,11 +23,17 @@
 .line-sidebar__list {
   list-style: none;
   margin: 0;
-  padding: 0.5rem 0;
+  padding: 0.25rem 0;
   display: flex;
   flex-direction: column;
   gap: var(--item-gap);
   width: 100%;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.line-sidebar__list::-webkit-scrollbar {
+  display: none;
 }
 
 /* --effect (0..1) is driven per item by a rAF lerp in JS, so every derived
@@ -39,11 +45,11 @@
   user-select: none;
 }
 
-/* Widen the pointer target so items react a touch before the cursor arrives */
+/* Widen the pointer target vertically without bleeding horizontally */
 .line-sidebar__item::before {
   content: '';
   position: absolute;
-  inset: -4px -24px;
+  inset: -4px 0;
 }
 
 .line-sidebar__label {
@@ -51,8 +57,9 @@
   display: inline-flex;
   align-items: center;
   font-size: var(--font-size);
-  line-height: 1.3;
-  font-weight: 600;
+  line-height: 1.35;
+  font-weight: 700;
+  white-space: nowrap;
   color: color-mix(in srgb, var(--accent-color) calc(var(--effect, 0) * 100%), var(--text-color));
   transform: translateX(calc(var(--effect, 0) * var(--max-shift)));
   transition: none;
@@ -60,7 +67,7 @@
 
 .line-sidebar__index {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  margin-right: 0.5rem;
+  margin-right: 0.35rem;
   font-size: 0.78em;
   opacity: calc(0.45 + var(--effect, 0) * 0.55);
 }
