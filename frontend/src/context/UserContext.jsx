@@ -124,4 +124,6 @@ export const useUser = () => {
   return context;
 };
 
+export const useUserContext = useUser;
+
 export default UserContext;
