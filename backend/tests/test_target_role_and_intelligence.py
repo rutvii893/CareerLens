@@ -79,7 +79,7 @@ def test_target_role_selection_and_skill_gap_calculation():
 def test_dashboard_job_recommendations_based_on_target_role():
     headers, _ = _register_user('JobRecom')
 
-    # Seed job listings for Backend and Frontend
+    # Seed job listings for Backend, Frontend, and Data Engineer
     client.post('/api/v1/matching/jobs', json={
         'title': 'Frontend React Engineer',
         'company': 'Pixel Craft',
@@ -94,7 +94,33 @@ def test_dashboard_job_recommendations_based_on_target_role():
         'location': 'New York, NY'
     }, headers=headers)
 
-    # Set target role to Frontend Developer
+    client.post('/api/v1/matching/jobs', json={
+        'title': 'Senior Data Engineer',
+        'company': 'Pipeline Stream Labs',
+        'description': 'Building large scale ETL pipelines and data warehouses with Python, SQL, Spark and Kafka.',
+        'location': 'Remote'
+    }, headers=headers)
+
+    # 1. Set target role to Data Engineer
+    client.put(
+        '/api/v1/users/me/target-goal',
+        json={'target_role': 'Data Engineer', 'target_score': 85.0},
+        headers=headers
+    )
+    # Add Python and SQL skills
+    client.post('/api/v1/users/me/skills', json={'skill_name': 'Python', 'current_score': 85.0}, headers=headers)
+    client.post('/api/v1/users/me/skills', json={'skill_name': 'SQL', 'current_score': 80.0}, headers=headers)
+
+    dash_de = client.get('/api/v1/users/me/dashboard', headers=headers).json()
+    assert 1 <= len(dash_de['recommended_jobs']) <= 2
+    for job in dash_de['recommended_jobs']:
+        # Must only recommend Data Engineer / Data Platform jobs, NOT Frontend or Backend
+        assert 'Frontend' not in job['title']
+        assert 'React' not in job['title']
+        assert 'Data' in job['title'] or 'ETL' in job['title']
+        assert job['tier'] == 'Direct Match'
+
+    # 2. Change target role to Frontend Developer
     client.put(
         '/api/v1/users/me/target-goal',
         json={'target_role': 'Frontend Developer', 'target_score': 80.0},
@@ -104,24 +130,25 @@ def test_dashboard_job_recommendations_based_on_target_role():
     client.post('/api/v1/users/me/skills', json={'skill_name': 'React', 'current_score': 80.0}, headers=headers)
 
     dash_fe = client.get('/api/v1/users/me/dashboard', headers=headers).json()
-    assert len(dash_fe['recommended_jobs']) > 0
+    assert 1 <= len(dash_fe['recommended_jobs']) <= 2
     top_fe_job = dash_fe['recommended_jobs'][0]
     assert 'Frontend' in top_fe_job['title'] or 'React' in top_fe_job['title']
+    assert top_fe_job['tier'] == 'Direct Match'
 
-    # Now change target role to Backend Engineer
+    # 3. Now change target role to Backend Engineer
     client.put(
         '/api/v1/users/me/target-goal',
         json={'target_role': 'Backend Engineer', 'target_score': 85.0},
         headers=headers
     )
     # Add backend skills
-    client.post('/api/v1/users/me/skills', json={'skill_name': 'Python', 'current_score': 85.0}, headers=headers)
     client.post('/api/v1/users/me/skills', json={'skill_name': 'FastAPI', 'current_score': 80.0}, headers=headers)
 
     dash_be = client.get('/api/v1/users/me/dashboard', headers=headers).json()
-    assert len(dash_be['recommended_jobs']) > 0
+    assert 1 <= len(dash_be['recommended_jobs']) <= 2
     top_be_job = dash_be['recommended_jobs'][0]
     assert 'Backend' in top_be_job['title'] or 'Python' in top_be_job['title']
+    assert top_be_job['tier'] == 'Direct Match'
 
 
 def test_career_roadmap_generation_and_phase_completion():

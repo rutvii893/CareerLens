@@ -6,10 +6,12 @@ import {
   RefreshCw,
   UploadCloud,
 } from 'lucide-react';
+import { useUser } from '../context/UserContext';
 import { userService } from '../services/userService';
 import Dashboard14 from '../components/dashboard/Dashboard14';
 
 const Dashboard = () => {
+  const { targetRole, updateTargetGoal } = useUser();
   const [metrics, setMetrics] = useState(null);
   const [selectedService, setSelectedService] = useState('career_overview');
   const [error, setError] = useState('');
@@ -31,12 +33,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchMetrics();
-  }, []);
+  }, [targetRole]);
 
-  const handleUpdateTargetGoal = async (targetRole, targetScore) => {
+  const handleUpdateTargetGoal = async (newRole, newScore) => {
     try {
-      await userService.updateTargetGoal(targetRole, targetScore);
-      // Refresh metrics with updated skill gap calculations
+      await updateTargetGoal(newRole, newScore);
       const updated = await userService.getDashboardMetrics();
       setMetrics(updated);
     } catch (err) {

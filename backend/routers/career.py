@@ -107,7 +107,7 @@ def create_roadmap(request: schemas.CareerAnalyzeRequest, db: Session = Depends(
     
     role = _role(db, request)
     analysis = analyze_career_gap(resume, role, custom_skills)
-    roadmap_items = build_roadmap(role, analysis['missing_skills'])
+    roadmap_items = build_roadmap(role, analysis['missing_skills'], analysis.get('matching_skills', []))
     stored = crud.create_career_roadmap(
         db,
         current_user.id,
@@ -124,8 +124,27 @@ def create_roadmap(request: schemas.CareerAnalyzeRequest, db: Session = Depends(
 @router.get('/roadmap', response_model=schemas.CareerRoadmapResponse)
 def get_roadmap(resumeId: int | None = None, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     stored = crud.get_latest_career_roadmap(db, current_user.id, resumeId)
-    if stored is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Career roadmap not found. Generate one for your target role.')
+    if stored is not None:
+        return _format_roadmap_response(stored, db)
+
+    resume = _owned_resume(db, resumeId, current_user.id)
+    user_db = crud.get_user(db, current_user.id)
+    custom_skills = list(user_db.custom_skills or []) if user_db else []
+    target_role_name = (user_db.target_role if user_db and user_db.target_role else 'Full Stack Engineer').strip()
+
+    role = find_or_create_role(db, None, target_role_name)
+    analysis = analyze_career_gap(resume, role, custom_skills)
+    roadmap_items = build_roadmap(role, analysis['missing_skills'], analysis.get('matching_skills', []))
+    stored = crud.create_career_roadmap(
+        db,
+        current_user.id,
+        role.name,
+        resume.id if resume else None,
+        roadmap_items,
+        role.id,
+        analysis['missing_skills'],
+        analysis['recommended_skills'],
+    )
     return _format_roadmap_response(stored, db)
 
 

@@ -14,9 +14,11 @@ import {
   Target,
   User,
 } from 'lucide-react';
+import { useUser } from '../context/UserContext';
 import { userService } from '../services/userService';
 
 const Profile = () => {
+  const { refreshUserData } = useUser();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -77,6 +79,7 @@ const Profile = () => {
     try {
       const updated = await userService.updateProfile(formData);
       setProfile(updated);
+      refreshUserData();
       setSuccessMsg('Profile details saved successfully!');
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
