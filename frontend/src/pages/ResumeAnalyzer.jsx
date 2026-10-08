@@ -93,7 +93,7 @@ const ResumeAnalyzer = () => {
               onClick={handleUpload}
               disabled={uploading || !file}
               className={`w-full py-3.5 rounded-xl font-semibold text-white shadow-md transition-all ${
-                uploading || !file ? 'bg-slate-300 cursor-not-allowed' : 'bg-gradient-to-r from-[#2563eb] to-[#7c3aed] hover:shadow-lg'
+                uploading || !file ? 'bg-slate-300 cursor-not-allowed' : 'bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg cursor-pointer'
               }`}
             >
               {uploading ? 'Uploading...' : 'Upload Resume'}
@@ -101,16 +101,16 @@ const ResumeAnalyzer = () => {
           </>
         ) : (
           <div className="py-10">
-            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-10 h-10 text-[#16a34a]" />
+            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-[#3B82F6]" />
             </div>
-            <h2 className="text-2xl font-bold font-jakarta text-[#0f172a] mb-2">Upload Successful</h2>
-            <p className="text-[#64748b] mb-2">Filename: <span className="font-semibold text-[#0f172a]">{result.filename}</span></p>
-            <p className="text-[#64748b] mb-8">Status: <span className="font-semibold text-[#0f172a] capitalize">{result.status}</span></p>
+            <h2 className="text-2xl font-bold font-jakarta text-[#0F172A] mb-2">Upload Successful</h2>
+            <p className="text-[#64748B] mb-2">Filename: <span className="font-semibold text-[#0F172A]">{result.filename}</span></p>
+            <p className="text-[#64748B] mb-8">Status: <span className="font-semibold text-[#0F172A] capitalize">{result.status}</span></p>
             
             <button 
               onClick={() => navigate(`/resume/analysis?resumeId=${result.id}`)}
-              className="px-8 py-3.5 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
+              className="px-8 py-3.5 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all cursor-pointer"
             >
               Analyze Resume
             </button>

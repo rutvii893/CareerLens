@@ -48,8 +48,8 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="p-6 md:p-8 max-w-[1360px] mx-auto w-full min-h-[60vh] flex flex-col items-center justify-center">
-        <LoaderCircle className="w-10 h-10 animate-spin text-[#2563eb] mb-4" />
-        <p className="text-slate-600 font-medium font-inter">Loading your live career intelligence data...</p>
+        <LoaderCircle className="w-10 h-10 animate-spin text-[#3B82F6] mb-4" />
+        <p className="text-[#64748B] font-medium font-inter">Loading your live career intelligence data...</p>
       </div>
     );
   }
@@ -81,24 +81,24 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold font-jakarta text-slate-900 tracking-tight">
-            Career Intelligence Board
+          <h1 className="text-3xl font-extrabold font-jakarta text-[#0F172A] tracking-tight">
+            Dashboard
           </h1>
-          <p className="text-slate-500 font-inter mt-1">
-            Master-detail service telemetry based on your resume, skills, target role, and career milestones.
+          <p className="text-[#64748B] font-inter mt-1">
+            Your progress toward becoming a {targetRole || 'Software Engineer'}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={fetchMetrics}
-            className="p-2.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl transition-all shadow-sm flex items-center gap-2 text-xs font-semibold"
+            className="p-2.5 bg-white hover:bg-slate-50 text-[#64748B] border border-slate-200 rounded-xl transition-all shadow-2xs flex items-center gap-2 text-xs font-semibold cursor-pointer"
             title="Refresh dashboard metrics"
           >
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
           <Link
             to="/resume"
-            className="px-4 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] hover:opacity-95 text-white font-semibold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2"
+            className="px-4 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:opacity-95 text-white font-semibold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2"
           >
             <UploadCloud className="w-4 h-4" /> Upload Resume
           </Link>

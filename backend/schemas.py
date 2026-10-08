@@ -67,6 +67,7 @@ class SkillAssessmentItem(BaseModel):
     gap_percentage: float = 0.0
     status: str = 'needs_improvement'
     source: str = 'verified'
+    learning_progress: float = 0.0
 
 
 class CustomSkillCreate(BaseModel):
@@ -338,7 +339,9 @@ class CareerRoadmapResponse(BaseModel):
 
 
 class RoadmapPhaseUpdate(BaseModel):
-    status: str = Field(..., pattern='^(ready|in_progress|completed)$')
+    status: Optional[str] = Field(None, pattern='^(ready|in_progress|completed)$')
+    task_id: Optional[str] = None
+    task_completed: Optional[bool] = None
 
 
 class InterviewStartRequest(BaseModel):

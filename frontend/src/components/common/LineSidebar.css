@@ -76,7 +76,7 @@
   position: absolute;
   top: 50%;
   left: calc(-1 * var(--marker-length) - var(--marker-gap));
-  height: 2px;
+  height: 1px;
   border-radius: 9999px;
   width: var(--marker-length);
   background-color: color-mix(in srgb, var(--accent-color) calc(var(--effect, 0) * 100%), var(--marker-color));

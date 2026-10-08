@@ -259,7 +259,7 @@ def create_career_roadmap(
     return career_roadmap
 
 
-def update_career_roadmap_phase(db: Session, roadmap_id: int, user_id: int, phase_idx: int, phase_status: str) -> Optional[models.CareerRoadmap]:
+def update_career_roadmap_phase(db: Session, roadmap_id: int, user_id: int, phase_idx: int, phase_status: str, task_id: Optional[str] = None, task_completed: Optional[bool] = None) -> Optional[models.CareerRoadmap]:
     roadmap_obj = db.scalar(
         select(models.CareerRoadmap).where(models.CareerRoadmap.id == roadmap_id, models.CareerRoadmap.user_id == user_id)
     )
@@ -267,9 +267,22 @@ def update_career_roadmap_phase(db: Session, roadmap_id: int, user_id: int, phas
         return None
 
     items = list(roadmap_obj.roadmap or [])
+    updated_task_skill = None
     if 0 <= phase_idx < len(items):
         items[phase_idx] = dict(items[phase_idx])
-        items[phase_idx]['status'] = phase_status
+        if task_id and task_completed is not None:
+            tasks = list(items[phase_idx].get('tasks') or [])
+            for t in tasks:
+                if t.get('task_id') == task_id or t.get('title') == task_id:
+                    t['completed'] = task_completed
+                    updated_task_skill = t.get('associated_skill') or t.get('skill_name')
+            items[phase_idx]['tasks'] = tasks
+            # Check if all tasks completed in this phase
+            all_done = all(t.get('completed') for t in tasks) if tasks else False
+            items[phase_idx]['status'] = 'completed' if all_done else ('in_progress' if any(t.get('completed') for t in tasks) else 'ready')
+        else:
+            items[phase_idx]['status'] = phase_status
+
         roadmap_obj.roadmap = items
         roadmap_obj.updated_at = datetime.utcnow()
         completed = sum(1 for item in items if item.get('status') in {'completed', 'done'})
@@ -279,6 +292,35 @@ def update_career_roadmap_phase(db: Session, roadmap_id: int, user_id: int, phas
             roadmap_obj.status = 'in_progress'
         else:
             roadmap_obj.status = 'draft'
+
+        # Now sync skill learning progress to user preferences
+        user_obj = db.scalar(select(models.User).where(models.User.id == user_id))
+        if user_obj:
+            prefs = dict(user_obj.preferences or {})
+            assessments = dict(prefs.get('skill_assessments') or {})
+
+            # Collect all tasks across all phases and group by associated_skill
+            skill_task_counts = {} # skill_name -> {completed: int, total: int}
+            for phase in items:
+                for t in phase.get('tasks') or []:
+                    s_name = t.get('associated_skill') or t.get('skill_name')
+                    if s_name:
+                        if s_name not in skill_task_counts:
+                            skill_task_counts[s_name] = {'completed': 0, 'total': 0}
+                        skill_task_counts[s_name]['total'] += 1
+                        if t.get('completed'):
+                            skill_task_counts[s_name]['completed'] += 1
+
+            for s_name, counts in skill_task_counts.items():
+                progress_pct = round((counts['completed'] / counts['total']) * 100.0, 1) if counts['total'] > 0 else 0.0
+                curr_meta = dict(assessments.get(s_name) or {})
+                curr_meta['learning_progress'] = progress_pct
+                assessments[s_name] = curr_meta
+
+            prefs['skill_assessments'] = assessments
+            user_obj.preferences = prefs
+            db.add(user_obj)
+
         db.add(roadmap_obj)
         db.commit()
         db.refresh(roadmap_obj)
@@ -506,40 +548,53 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
     req_skills = role_skills(role_obj) if role_obj and role_obj.skills else DEFAULT_ROLE_PROFILES.get(target_role, ['Python', 'JavaScript', 'React', 'SQL', 'Git', 'REST API', 'Docker'])
 
     # Calculate skill gaps according to formula: max(0, Target - Current) / Target * 100
+    # Deduplicate all user skills
+    user_skills_map = {} # skill_lower -> {name, source: 'resume'|'custom', learning_progress: float}
+    for s in extracted:
+        user_skills_map[s.lower()] = {'name': s, 'source': 'resume', 'learning_progress': 0.0}
+    for s in custom:
+        if s.lower() not in user_skills_map:
+            user_skills_map[s.lower()] = {'name': s, 'source': 'custom', 'learning_progress': 0.0}
+    for s, meta in skill_assessments.items():
+        if s.lower() in user_skills_map:
+            user_skills_map[s.lower()]['learning_progress'] = float(meta.get('learning_progress', meta.get('current_score', 0.0)))
+        else:
+            user_skills_map[s.lower()] = {'name': s, 'source': 'assessed', 'learning_progress': float(meta.get('learning_progress', meta.get('current_score', 0.0)))}
+
+    # Calculate skill gaps according to evidence-based model:
+    # Detected skills are present in resume/custom profile.
+    # Learning progress (0-100%) comes from completed roadmap tasks.
+    # Gap percentage: 0.0% if skill is detected or learning_progress >= 100%, else max(0, 100 - learning_progress)
     individual_gaps = []
     assessed_items = []
-    extracted_lower = {s.lower() for s in extracted}
-    custom_lower = {s.lower() for s in custom}
 
     for skill in req_skills:
         s_lower = skill.lower()
-        if skill in skill_assessments:
-            c_score = float(skill_assessments[skill].get('current_score', 0.0))
-            t_score = float(skill_assessments[skill].get('target_score', target_score))
-            source_tag = 'assessed'
-        elif s_lower in extracted_lower:
-            c_score = 75.0
-            t_score = target_score
-            source_tag = 'resume'
-        elif s_lower in custom_lower:
-            c_score = 65.0
-            t_score = target_score
-            source_tag = 'custom'
+        if s_lower in user_skills_map:
+            info = user_skills_map[s_lower]
+            learning_pct = info['learning_progress']
+            # Skill is present/detected on profile.
+            detected = True
+            c_score = max(100.0 if detected else 0.0, learning_pct)
+            source_tag = info['source']
+            gap_pct = max(0.0, round(100.0 - c_score, 1))
+            status_label = 'meets_target'
         else:
+            # Skill is missing from user profile & resume
             c_score = 0.0
-            t_score = target_score
             source_tag = 'missing'
+            gap_pct = 100.0
+            status_label = 'missing'
 
-        gap_pct = round(max(0.0, t_score - c_score) / t_score * 100.0, 1) if t_score > 0 else 0.0
         individual_gaps.append(gap_pct)
-        status_label = 'meets_target' if c_score >= t_score else ('missing' if c_score == 0 else 'needs_improvement')
         assessed_items.append({
             'name': skill,
             'current_score': c_score,
-            'target_score': t_score,
+            'target_score': target_score,
             'gap_percentage': gap_pct,
             'status': status_label,
             'source': source_tag,
+            'learning_progress': user_skills_map[s_lower]['learning_progress'] if s_lower in user_skills_map else 0.0,
         })
 
     overall_skill_gap = round(sum(individual_gaps) / len(individual_gaps), 1) if individual_gaps else 0.0

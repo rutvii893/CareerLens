@@ -4,6 +4,8 @@ import { LogOut, LayoutDashboard, Menu } from 'lucide-react';
 import Button from '../common/Button';
 import { authService } from '../../services/authService';
 
+import CareerLensLogo from '../common/CareerLensLogo';
+
 const Navbar = ({ isLanding = false, onMenuToggle }) => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -14,7 +16,7 @@ const Navbar = ({ isLanding = false, onMenuToggle }) => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 w-full h-[64px] bg-white/90 backdrop-blur-md border-b border-[#e2e8f0] z-50 px-4 md:px-8 flex items-center justify-between transition-colors duration-300">
+    <nav className="fixed top-0 left-0 w-full h-[76px] bg-white/95 backdrop-blur-md border-b border-[#e2e8f0] z-50 px-6 md:px-10 flex items-center justify-between transition-colors duration-300">
       <div className="flex items-center gap-3">
         {!isLanding && (
           <button
@@ -25,34 +27,29 @@ const Navbar = ({ isLanding = false, onMenuToggle }) => {
             <Menu size={18} />
           </button>
         )}
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-[#2563eb] to-[#7c3aed] rounded-xl flex items-center justify-center text-white font-bold font-jakarta shadow-xs">
-            C
-          </div>
-          <span className="font-jakarta font-extrabold text-xl text-[#0f172a] tracking-tight">CareerLens</span>
-        </Link>
+        <CareerLensLogo variant="full" size="navbar" />
       </div>
       
       {isLanding && (
         <div className="hidden md:flex items-center gap-6">
-          <a href="#features" className="text-sm font-inter text-[#64748b] hover:text-[#2563eb] transition-colors">Features</a>
-          <Link to="/resume" className="text-sm font-inter text-[#64748b] hover:text-[#2563eb] transition-colors">AI Resume Screening</Link>
-          <Link to="/jobs" className="text-sm font-inter text-[#64748b] hover:text-[#2563eb] transition-colors">Job Matching</Link>
-          <Link to="/career" className="text-sm font-inter text-[#64748b] hover:text-[#2563eb] transition-colors">Career Intelligence</Link>
-          <Link to="/interview" className="text-sm font-inter text-[#64748b] hover:text-[#2563eb] transition-colors">Interview Preparation</Link>
+          <a href="#features" className="text-sm font-inter text-[#64748B] hover:text-[#3B82F6] transition-colors">Features</a>
+          <Link to="/resume" className="text-sm font-inter text-[#64748B] hover:text-[#3B82F6] transition-colors">AI Resume Screening</Link>
+          <Link to="/jobs" className="text-sm font-inter text-[#64748B] hover:text-[#3B82F6] transition-colors">Job Matching</Link>
+          <Link to="/career" className="text-sm font-inter text-[#64748B] hover:text-[#3B82F6] transition-colors">Career Intelligence</Link>
+          <Link to="/interview" className="text-sm font-inter text-[#64748B] hover:text-[#3B82F6] transition-colors">Interview Preparation</Link>
         </div>
       )}
 
       <div className="flex items-center gap-4">
         {token ? (
           <>
-            <Link to="/dashboard" className="text-sm font-inter font-medium text-[#2563eb] flex items-center gap-1.5 hover:text-[#1d4ed8]">
+            <Link to="/dashboard" className="text-sm font-inter font-medium text-[#3B82F6] flex items-center gap-1.5 hover:text-[#2563EB]">
               <LayoutDashboard size={16} />
               Dashboard
             </Link>
             <button
               onClick={handleLogout}
-              className="text-sm font-inter font-medium text-[#64748b] hover:text-red-600 flex items-center gap-1.5 transition-colors"
+              className="text-sm font-inter font-medium text-[#64748B] hover:text-red-600 flex items-center gap-1.5 transition-colors"
             >
               <LogOut size={16} />
               Sign out
@@ -60,7 +57,7 @@ const Navbar = ({ isLanding = false, onMenuToggle }) => {
           </>
         ) : (
           <>
-            <Link to="/login" className="text-sm font-inter font-medium text-[#64748b] hover:text-[#0f172a]">Log in</Link>
+            <Link to="/login" className="text-sm font-inter font-medium text-[#64748B] hover:text-[#0F172A]">Log in</Link>
             <Link to="/register">
               <Button variant="primary">Get Started</Button>
             </Link>
