@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertCircle,
+  FilePlus2,
+  FileText,
   LoaderCircle,
   RefreshCw,
-  UploadCloud,
 } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { userService } from '../services/userService';
@@ -58,7 +59,7 @@ const Dashboard = () => {
     return (
       <div className="p-6 md:p-8 max-w-[1360px] mx-auto w-full">
         <div className="bg-red-50 border border-red-200 rounded-3xl p-6 text-red-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <AlertCircle className="w-6 h-6 text-red-600 shrink-0" />
             <div>
               <h3 className="font-semibold font-jakarta">Could not load dashboard</h3>
@@ -96,14 +97,19 @@ const Dashboard = () => {
           >
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
-          <Link
-            to="/resume"
-            className="px-4 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] hover:opacity-95 text-white font-semibold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2"
-          >
-            <UploadCloud className="w-4 h-4" /> Upload Resume
-          </Link>
         </div>
       </div>
+
+      <section className="grid gap-4 md:grid-cols-2" aria-label="Resume tools">
+        <Link to="/resume" className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><FileText className="h-6 w-6" /></span>
+          <span><strong className="block text-slate-900">Resume Analyzer</strong><span className="mt-1 block text-sm text-slate-500">Upload a resume to review ATS compatibility.</span></span>
+        </Link>
+        <Link to="/resume-generator" className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-violet-300 hover:shadow-md">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><FilePlus2 className="h-6 w-6" /></span>
+          <span><strong className="block text-slate-900">Resume Generator</strong><span className="mt-1 block text-sm text-slate-500">Create and save a student-friendly resume step by step.</span></span>
+        </Link>
+      </section>
 
       {/* React Bits Pro Dashboard 14 Master-Detail Service Board */}
       <Dashboard14
@@ -118,4 +124,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

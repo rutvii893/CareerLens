@@ -13,7 +13,20 @@ def ensure_interview_columns() -> None:
     sync_database_schema()
 
 
+def ensure_generated_resume_columns(target_engine=engine) -> None:
+    inspector = inspect(target_engine)
+    if 'generated_resumes' not in inspector.get_table_names():
+        return
+    columns = {column['name'] for column in inspector.get_columns('generated_resumes')}
+    if 'template' not in columns:
+        with target_engine.begin() as connection:
+            connection.execute(text(
+                "ALTER TABLE generated_resumes ADD COLUMN template VARCHAR(32) NOT NULL DEFAULT 'classic'"
+            ))
+
+
 def sync_database_schema() -> None:
+    ensure_generated_resume_columns()
     insp = inspect(engine)
     tables = insp.get_table_names()
 
@@ -120,5 +133,3 @@ def ensure_db_defaults() -> None:
                 connection.execute(text(stmt))
             except Exception:
                 pass
-
-

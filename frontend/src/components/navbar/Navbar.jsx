@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, LayoutDashboard, Menu } from 'lucide-react';
 import Button from '../common/Button';
 import { authService } from '../../services/authService';
+import { getAccessToken } from '../../services/tokenStorage';
 
 const Navbar = ({ isLanding = false, onMenuToggle }) => {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const token = getAccessToken();
 
   const handleLogout = () => {
     authService.logout();

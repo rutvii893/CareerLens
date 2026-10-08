@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   FileText,
+  FilePlus2,
   Briefcase,
   GraduationCap,
   Sparkles,
@@ -14,12 +15,12 @@ import {
   Compass,
 } from 'lucide-react';
 import LineSidebar from '../common/LineSidebar';
-import { useUserContext } from '../../context/UserContext';
 
 const NAV_ITEMS = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { name: 'My Skills', path: '/skills', icon: GraduationCap },
-  { name: 'Resume Intelligence', path: '/resume', icon: FileText },
+  { name: 'Resume Analyzer', path: '/resume', icon: FileText },
+  { name: 'Resume Generator', path: '/resume-generator', icon: FilePlus2 },
   { name: 'Job Matching', path: '/jobs', icon: Briefcase },
   { name: 'Learning Roadmap', path: '/career/roadmap', icon: Map },
   { name: 'AI Career Coach', path: '/career', icon: Sparkles },
@@ -29,18 +30,18 @@ const NAV_ITEMS = [
 const Sidebar = ({ open = false, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { targetRole } = useUserContext();
 
   // Determine active index for LineSidebar
   const getActiveIndex = () => {
     const path = location.pathname;
     if (path === '/dashboard') return 0;
     if (path === '/skills') return 1;
-    if (path.startsWith('/resume')) return 2;
-    if (path.startsWith('/jobs')) return 3;
-    if (path.includes('/roadmap')) return 4;
-    if (path === '/career' || path === '/coach') return 5;
-    if (path.startsWith('/interview')) return 6;
+    if (path === '/resume') return 2;
+    if (path.startsWith('/resume-generator')) return 3;
+    if (path.startsWith('/jobs')) return 4;
+    if (path.includes('/roadmap')) return 5;
+    if (path === '/career' || path === '/coach') return 6;
+    if (path.startsWith('/interview')) return 7;
     return 0;
   };
 

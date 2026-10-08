@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 class Token(BaseModel):
@@ -179,6 +179,116 @@ class ResumeUploadResponse(BaseModel):
     id: int
     filename: str
     status: str
+
+
+class GeneratedResumeTechnology(BaseModel):
+    name: str = Field(..., min_length=1, max_length=128)
+    knowledge_percent: float = Field(..., ge=0, le=100)
+
+    @field_validator('name')
+    @classmethod
+    def clean_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError('Technology name cannot be blank')
+        return value
+
+
+class GeneratedResumeCertification(BaseModel):
+    name: str = Field('', max_length=255)
+    organization: str = Field('', max_length=255)
+    issue_date: str = Field('', max_length=64)
+    credential_id: str = Field('', max_length=255)
+    credential_url: str = Field('', max_length=2048)
+
+
+class GeneratedResumeHackathon(BaseModel):
+    name: str = Field('', max_length=255)
+    organization: str = Field('', max_length=255)
+    date: str = Field('', max_length=64)
+    position: str = Field('', max_length=128)
+    project_name: str = Field('', max_length=255)
+    description: str = Field('', max_length=4000)
+    technologies: str = Field('', max_length=1000)
+
+
+class GeneratedResumeAchievement(BaseModel):
+    title: str = Field('', max_length=255)
+    description: str = Field('', max_length=4000)
+    date: str = Field('', max_length=64)
+    organization: str = Field('', max_length=255)
+
+
+class GeneratedResumeProject(BaseModel):
+    name: str = Field('', max_length=255)
+    description: str = Field('', max_length=4000)
+    technologies: str = Field('', max_length=1000)
+    contribution: str = Field('', max_length=2000)
+    github_url: str = Field('', max_length=2048)
+    demo_url: str = Field('', max_length=2048)
+
+
+class GeneratedResumeEducation(BaseModel):
+    degree: str = Field('', max_length=255)
+    institution: str = Field('', max_length=255)
+    specialization: str = Field('', max_length=255)
+    start_year: str = Field('', max_length=32)
+    graduation_year: str = Field('', max_length=32)
+    grade: str = Field('', max_length=64)
+    coursework: str = Field('', max_length=1000)
+
+
+class GeneratedResumeExperience(BaseModel):
+    company: str = Field('', max_length=255)
+    role: str = Field('', max_length=255)
+    start_date: str = Field('', max_length=64)
+    end_date: str = Field('', max_length=64)
+    responsibilities: str = Field('', max_length=4000)
+    technologies: str = Field('', max_length=1000)
+
+
+class GeneratedResumeContact(BaseModel):
+    name: str = Field('', max_length=128)
+    email: str = Field('', max_length=256)
+    phone: str = Field('', max_length=64)
+    location: str = Field('', max_length=255)
+    linkedin_url: str = Field('', max_length=2048)
+    github_url: str = Field('', max_length=2048)
+    portfolio_url: str = Field('', max_length=2048)
+
+
+class GeneratedResumeUpsert(BaseModel):
+    title: str = Field('', max_length=255)
+    career_role: str = Field(..., min_length=1, max_length=255)
+    template: str = Field('classic', pattern='^(classic|modern|minimal|professional|student)$')
+    technical_skills: List[GeneratedResumeTechnology] = Field(default_factory=list)
+    soft_skills: List[str] = Field(default_factory=list)
+    certifications: List[GeneratedResumeCertification] = Field(default_factory=list)
+    hackathons: List[GeneratedResumeHackathon] = Field(default_factory=list)
+    achievements: List[GeneratedResumeAchievement] = Field(default_factory=list)
+    projects: List[GeneratedResumeProject] = Field(default_factory=list)
+    education: List[GeneratedResumeEducation] = Field(default_factory=list)
+    experience: List[GeneratedResumeExperience] = Field(default_factory=list)
+    contact: GeneratedResumeContact = Field(default_factory=GeneratedResumeContact)
+    summary: Optional[str] = None
+    current_step: int = Field(1, ge=1, le=12)
+
+    @field_validator('career_role')
+    @classmethod
+    def clean_career_role(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError('Career role cannot be blank')
+        return value
+
+
+class GeneratedResumeRead(GeneratedResumeUpsert):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
 
 
 class MatchingRequest(BaseModel):
