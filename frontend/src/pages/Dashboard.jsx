@@ -97,12 +97,15 @@ const Dashboard = () => {
           >
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
+<<<<<<< HEAD
+=======
           <Link
             to="/resume"
-            className="px-4 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] hover:opacity-95 text-white font-semibold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2"
+            className="px-4 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:opacity-95 text-white font-semibold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2"
           >
             <UploadCloud className="w-4 h-4" /> Upload Resume
           </Link>
+>>>>>>> 9a8595508db4b733fdfb2edec9cd390151655954
         </div>
       </div>
 
