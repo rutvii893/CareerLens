@@ -66,16 +66,12 @@ const Sidebar = ({ open = false, onClose }) => {
       )}
 
       <aside
-        className={`fixed left-0 top-[64px] w-64 h-[calc(100vh-64px)] bg-white/95 backdrop-blur-md border-r border-[#e2e8f0] flex flex-col py-6 px-4 z-40 overflow-hidden transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-[76px] w-64 h-[calc(100vh-76px)] bg-white/95 backdrop-blur-md border-r border-[#e2e8f0] flex flex-col py-5 px-4 z-40 overflow-y-auto transition-transform duration-300 ease-in-out ${
           open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        {/* Mobile Header */}
-        <div className="flex items-center justify-between pb-3 mb-2 md:hidden border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <Compass className="w-4 h-4 text-[#2563eb]" />
-            <span className="text-xs font-bold text-slate-800">Navigation Menu</span>
-          </div>
+        {/* Top Sidebar Header */}
+        <div className="flex items-center justify-end md:hidden pb-2 mb-2 border-b border-slate-100">
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
@@ -84,32 +80,32 @@ const Sidebar = ({ open = false, onClose }) => {
           </button>
         </div>
 
-        {/* React Bits LineSidebar Navigation */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1 pt-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <div className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">
+        {/* LineSidebar Navigation Items */}
+        <div className="flex-1 pt-2">
+          <div className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-4">
             Workspace Modules
           </div>
 
           <LineSidebar
-            items={NAV_ITEMS.map((item) => item.name)}
-            accentColor="#2563eb"
-            textColor="#475569"
+            items={NAV_ITEMS.map(i => i.name)}
+            active={activeIdx}
+            accentColor="#3B82F6"
+            textColor="#64748b"
             markerColor="#cbd5e1"
             showIndex={true}
             showMarker={true}
-            proximityRadius={80}
-            maxShift={6}
+            proximityRadius={95}
+            maxShift={18}
             falloff="smooth"
-            markerLength={18}
+            markerLength={32}
             markerGap={4}
             tickScale={0.5}
             scaleTick={true}
-            itemGap={16}
-            fontSize={0.92}
-            smoothing={100}
-            active={activeIdx}
+            itemGap={15}
+            fontSize={0.98}
+            smoothing={120}
             onItemClick={handleItemClick}
-            className="w-full"
+            className="pl-[42px] pr-2"
           />
         </div>
 
@@ -118,25 +114,25 @@ const Sidebar = ({ open = false, onClose }) => {
           <Link
             to="/profile"
             onClick={onClose}
-            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-inter text-sm font-semibold transition-all ${
+            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-inter text-xs font-bold transition-all ${
               location.pathname === '/profile'
-                ? 'bg-blue-50 text-[#2563eb] border border-blue-200/80 shadow-xs'
+                ? 'bg-blue-50 text-[#3B82F6] border border-blue-200/80 shadow-2xs font-extrabold'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            <User size={17} className={location.pathname === '/profile' ? 'text-[#2563eb]' : 'text-slate-400'} />
+            <User size={17} className={location.pathname === '/profile' ? 'text-[#3B82F6]' : 'text-slate-400'} />
             <span>My Profile</span>
           </Link>
           <Link
             to="/settings"
             onClick={onClose}
-            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-inter text-sm font-semibold transition-all ${
+            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-inter text-xs font-bold transition-all ${
               location.pathname === '/settings'
-                ? 'bg-blue-50 text-[#2563eb] border border-blue-200/80 shadow-xs'
+                ? 'bg-blue-50 text-[#3B82F6] border border-blue-200/80 shadow-2xs font-extrabold'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            <Settings size={17} className={location.pathname === '/settings' ? 'text-[#2563eb]' : 'text-slate-400'} />
+            <Settings size={17} className={location.pathname === '/settings' ? 'text-[#3B82F6]' : 'text-slate-400'} />
             <span>Settings</span>
           </Link>
         </div>

@@ -89,8 +89,8 @@ const Settings = () => {
       </div>
 
       {successMsg && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-[#3B82F6] shrink-0" />
           {successMsg}
         </div>
       )}
@@ -105,8 +105,8 @@ const Settings = () => {
       <form onSubmit={handleSave} className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
         {/* Job Search Preferences */}
         <div>
-          <h2 className="text-base font-bold font-jakarta text-slate-900 flex items-center gap-2 mb-1">
-            <Globe className="w-4 h-4 text-[#2563eb]" /> Job Search Country
+          <h2 className="text-base font-bold font-jakarta text-[#0F172A] flex items-center gap-2 mb-1">
+            <Globe className="w-4 h-4 text-[#3B82F6]" /> Job Search Country
           </h2>
           <p className="text-xs text-slate-500 mb-3">
             Sets the primary country region used when querying live vacancies from Adzuna.

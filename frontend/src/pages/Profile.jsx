@@ -127,8 +127,8 @@ const Profile = () => {
       </div>
 
       {successMsg && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-[#3B82F6] shrink-0" />
           {successMsg}
         </div>
       )}
@@ -144,13 +144,13 @@ const Profile = () => {
         {/* Left: Summary Card */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm text-center">
-            <div className="w-20 h-20 bg-gradient-to-tr from-[#2563eb] to-[#7c3aed] text-white text-2xl font-extrabold font-jakarta rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
+            <div className="w-20 h-20 bg-gradient-to-tr from-[#3B82F6] to-[#8B5CF6] text-white text-2xl font-extrabold font-jakarta rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
               {getInitials(formData.name)}
             </div>
-            <h2 className="text-xl font-bold font-jakarta text-slate-900">{formData.name || 'User'}</h2>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">{formData.email}</p>
+            <h2 className="text-xl font-bold font-jakarta text-[#0F172A]">{formData.name || 'User'}</h2>
+            <p className="text-xs text-[#64748B] font-medium mt-0.5">{formData.email}</p>
             {formData.target_role && (
-              <span className="inline-block mt-3 px-3 py-1 bg-blue-50 text-[#2563eb] border border-blue-200/60 rounded-full text-xs font-bold">
+              <span className="inline-block mt-3 px-3 py-1 bg-blue-50 text-[#3B82F6] border border-blue-200/60 rounded-full text-xs font-bold">
                 {formData.target_role}
               </span>
             )}
@@ -158,11 +158,11 @@ const Profile = () => {
             <div className="mt-6 pt-5 border-t border-slate-100 text-left">
               <div className="flex items-center justify-between text-xs mb-2">
                 <span className="font-bold text-slate-700">Profile Completeness</span>
-                <span className="font-extrabold text-[#2563eb]">{strengthPercentage}%</span>
+                <span className="font-extrabold text-[#3B82F6]">{strengthPercentage}%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-[#2563eb] h-2 rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] h-2 rounded-full transition-all duration-500"
                   style={{ width: `${strengthPercentage}%` }}
                 />
               </div>
@@ -173,8 +173,8 @@ const Profile = () => {
           </div>
 
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
-            <h3 className="text-sm font-bold font-jakarta text-slate-900 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Account Security
+            <h3 className="text-sm font-bold font-jakarta text-[#0F172A] flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#3B82F6]" /> Account Security
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
               Your account is authenticated with JWT tokens. Passwords are encrypted with bcrypt hashing.

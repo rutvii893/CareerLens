@@ -10,7 +10,7 @@ const Layout = ({ children, hideSidebar = false, isLanding = false }) => {
       <Navbar isLanding={isLanding} onMenuToggle={() => setSidebarOpen((open) => !open)} />
       {!hideSidebar && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
       
-      <main className={`${!isLanding ? 'pt-[72px]' : ''} min-h-screen ${!hideSidebar ? 'md:ml-64' : ''}`}>
+      <main className={`${!isLanding ? 'pt-[76px]' : ''} min-h-screen ${!hideSidebar ? 'md:ml-64' : ''}`}>
         {children}
       </main>
     </div>

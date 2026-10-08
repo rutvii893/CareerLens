@@ -43,7 +43,7 @@ const STATUS_CONFIG = {
   saved: { label: 'Saved', bg: 'bg-slate-100 text-slate-700 border-slate-200' },
   applied: { label: 'Applied', bg: 'bg-blue-50 text-blue-700 border-blue-200' },
   interviewing: { label: 'Interviewing', bg: 'bg-purple-50 text-purple-700 border-purple-200' },
-  offer: { label: 'Offer Received', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+  offer: { label: 'Offer Received', bg: 'bg-blue-50 text-blue-800 border-blue-200' },
   rejected: { label: 'Archived / Rejected', bg: 'bg-red-50 text-red-700 border-red-200' },
 };
 
@@ -208,9 +208,9 @@ const JobRecommendations = () => {
   };
 
   const getScoreBadge = (score) => {
-    if (score >= 80) return { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' };
-    if (score >= 60) return { bg: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' };
-    if (score >= 40) return { bg: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' };
+    if (score >= 80) return { bg: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' };
+    if (score >= 60) return { bg: 'bg-purple-50 text-purple-700 border-purple-200', dot: 'bg-purple-500' };
+    if (score >= 40) return { bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', dot: 'bg-indigo-500' };
     return { bg: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' };
   };
 
@@ -219,18 +219,18 @@ const JobRecommendations = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold font-jakarta text-slate-900 tracking-tight">
+          <h1 className="text-3xl font-extrabold font-jakarta text-[#0F172A] tracking-tight">
             Job Recommendations & Search
           </h1>
-          <p className="text-slate-500 font-inter mt-1">
+          <p className="text-[#64748B] font-inter mt-1">
             Search live vacancies from Adzuna with real-time CareerLens resume skill match scoring.
           </p>
         </div>
       </div>
 
       {saveSuccessMsg && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-[#3B82F6]" />
           {saveSuccessMsg}
         </div>
       )}
@@ -413,7 +413,7 @@ const JobRecommendations = () => {
 
                         <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
                           {job.formatted_salary && (
-                            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200/60 rounded-lg font-bold">
+                            <span className="px-2.5 py-1 bg-blue-50 text-blue-800 border border-blue-200/60 rounded-lg font-bold">
                               {job.formatted_salary}
                             </span>
                           )}
@@ -432,7 +432,7 @@ const JobRecommendations = () => {
                           {job.description?.length > 220 && (
                             <button
                               onClick={() => setExpandedJobId(isExpanded ? null : job.id)}
-                              className="text-xs font-bold text-[#2563eb] hover:underline mt-1"
+                              className="text-xs font-bold text-[#3B82F6] hover:underline mt-1"
                             >
                               {isExpanded ? 'Show less' : 'Read more'}
                             </button>
@@ -442,12 +442,12 @@ const JobRecommendations = () => {
                         {(job.matched_skills?.length > 0 || job.missing_skills?.length > 0) && (
                           <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-slate-100 text-xs">
                             {job.matched_skills.map((s) => (
-                              <span key={s} className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md font-medium flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> {s}
+                              <span key={s} className="px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-md font-medium flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-[#3B82F6]" /> {s}
                               </span>
                             ))}
                             {job.missing_skills.map((s) => (
-                              <span key={s} className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-md font-medium">
+                              <span key={s} className="px-2 py-0.5 bg-purple-50 text-purple-800 border border-purple-200 rounded-md font-medium">
                                 + {s}
                               </span>
                             ))}
@@ -481,7 +481,7 @@ const JobRecommendations = () => {
                                 : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-sm'
                             }`}
                           >
-                            {isSaved ? <BookmarkCheck className="w-4 h-4 text-emerald-600" /> : <Bookmark className="w-4 h-4" />}
+                            {isSaved ? <BookmarkCheck className="w-4 h-4 text-[#3B82F6]" /> : <Bookmark className="w-4 h-4" />}
                             {isSaved ? 'Saved' : 'Save Job'}
                           </button>
 
@@ -586,7 +586,7 @@ const JobRecommendations = () => {
                         {app.salary && <span>• {app.salary}</span>}
                       </p>
                       {app.match_score > 0 && (
-                        <span className="inline-block mt-2 px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-md">
+                        <span className="inline-block mt-2 px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md">
                           {Math.round(app.match_score)}% Resume Match
                         </span>
                       )}
@@ -645,7 +645,7 @@ const JobRecommendations = () => {
               placeholder="Enter your Resume ID to calculate benchmark overlap"
             />
             <button
-              className="px-5 py-2.5 bg-[#2563eb] text-white font-semibold text-sm rounded-xl hover:bg-blue-700 disabled:opacity-50"
+              className="px-5 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white font-semibold text-sm rounded-xl hover:opacity-95 disabled:opacity-50 cursor-pointer"
               type="submit"
               disabled={internalLoading}
             >
@@ -669,8 +669,8 @@ const JobRecommendations = () => {
                 <article key={item.job.id} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-bold font-jakarta text-slate-900 text-base">{item.job.title}</h3>
-                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs rounded-full shrink-0">
+                      <h3 className="font-bold font-jakarta text-[#0F172A] text-base">{item.job.title}</h3>
+                      <span className="px-2.5 py-1 bg-blue-50 text-blue-800 border border-blue-200 font-bold text-xs rounded-full shrink-0">
                         {Math.round(item.match_score)}% match
                       </span>
                     </div>
@@ -680,12 +680,12 @@ const JobRecommendations = () => {
                     {/* Matched Skills */}
                     {item.matched_skills?.length > 0 && (
                       <div className="mt-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 block mb-1">
                           Matched Skills ({item.matched_skills.length}):
                         </span>
                         <div className="flex flex-wrap gap-1">
                           {item.matched_skills.map((s) => (
-                            <span key={s} className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-semibold rounded">
+                            <span key={s} className="px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 text-[10px] font-semibold rounded">
                               {s}
                             </span>
                           ))}

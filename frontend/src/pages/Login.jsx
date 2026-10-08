@@ -9,6 +9,7 @@ import {
   LockKeyhole,
   Mail,
 } from 'lucide-react';
+import CareerLensLogo from '../components/common/CareerLensLogo';
 import { authService } from '../services/authService';
 import { useUser } from '../context/UserContext';
 
@@ -44,17 +45,15 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-[#f8fafc] via-slate-50 to-[#f1f5f9]">
-      <div className="w-full max-w-[460px] bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/40 p-6 sm:p-10 animate-fadeIn">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-[#F8FAFF] via-slate-50 to-blue-50/20">
+      <div className="w-full max-w-[460px] bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-blue-500/5 p-6 sm:p-10 animate-fadeIn">
         {/* Brand Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-tr from-[#2563eb] to-[#7c3aed] text-white font-bold font-jakarta text-xl rounded-2xl shadow-md shadow-blue-500/20 mb-3">
-            C
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold font-jakarta text-slate-900 tracking-tight">
+        <div className="text-center mb-8 flex flex-col items-center">
+          <CareerLensLogo variant="full" size="auth" className="mb-4" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold font-jakarta text-[#0F172A] tracking-tight">
             Welcome back
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-inter mt-1.5">
+          <p className="text-xs sm:text-sm text-[#64748B] font-inter mt-1.5">
             Sign in to continue your personalized career roadmap & diagnostics.
           </p>
         </div>
@@ -82,7 +81,7 @@ const Login = () => {
                 value={credentials.email}
                 onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
                 placeholder="name@example.com"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#2563eb] focus:ring-3 focus:ring-blue-500/15 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#3B82F6] focus:ring-3 focus:ring-blue-500/15 transition-all"
               />
             </div>
           </div>
@@ -102,7 +101,7 @@ const Login = () => {
                 value={credentials.password}
                 onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                 placeholder="Enter your password"
-                className="w-full pl-10 pr-11 py-2.5 bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#2563eb] focus:ring-3 focus:ring-blue-500/15 transition-all"
+                className="w-full pl-10 pr-11 py-2.5 bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#3B82F6] focus:ring-3 focus:ring-blue-500/15 transition-all"
               />
               <button
                 type="button"
@@ -118,7 +117,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] hover:opacity-95 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed group"
+            className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:opacity-95 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed group cursor-pointer"
           >
             {loading ? (
               <>
@@ -136,9 +135,9 @@ const Login = () => {
 
         {/* Footer Link */}
         <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-          <p className="text-xs sm:text-sm text-slate-500 font-inter">
+          <p className="text-xs sm:text-sm text-[#64748B] font-inter">
             Don&apos;t have an account?{' '}
-            <Link to="/register" className="font-bold text-[#2563eb] hover:text-[#1d4ed8] hover:underline">
+            <Link to="/register" className="font-bold text-[#3B82F6] hover:text-[#2563EB] hover:underline">
               Create your account
             </Link>
           </p>

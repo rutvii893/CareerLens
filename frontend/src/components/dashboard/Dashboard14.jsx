@@ -46,12 +46,12 @@ import {
 } from 'lucide-react';
 
 const SERVICES = [
-  { id: 'career_overview', label: 'Career Overview', icon: Target, badge: 'Summary', color: 'from-blue-600 to-indigo-600', textTone: 'text-blue-600', bgTone: 'bg-blue-50' },
-  { id: 'resume_intelligence', label: 'Resume Intelligence', icon: FileText, badge: 'ATS Audit', color: 'from-purple-600 to-indigo-600', textTone: 'text-purple-600', bgTone: 'bg-purple-50' },
-  { id: 'skills_gaps', label: 'Skills & Skill Gaps', icon: Sparkles, badge: 'Competency', color: 'from-amber-500 to-orange-600', textTone: 'text-amber-600', bgTone: 'bg-amber-50' },
-  { id: 'job_intelligence', label: 'Job Intelligence', icon: BriefcaseBusiness, badge: 'Target Role', color: 'from-emerald-600 to-teal-600', textTone: 'text-emerald-600', bgTone: 'bg-emerald-50' },
-  { id: 'interview_prep', label: 'Interview Preparation', icon: MessageSquare, badge: 'AI Mock', color: 'from-rose-500 to-pink-600', textTone: 'text-rose-600', bgTone: 'bg-rose-50' },
-  { id: 'career_roadmap', label: 'Career Roadmap', icon: Map, badge: 'Milestones', color: 'from-cyan-600 to-blue-600', textTone: 'text-cyan-600', bgTone: 'bg-cyan-50' },
+  { id: 'career_overview', label: 'Career Overview', icon: Target, badge: 'Summary', color: 'from-blue-600 to-purple-600', textTone: 'text-blue-600', bgTone: 'bg-blue-50' },
+  { id: 'resume_intelligence', label: 'Resume Intelligence', icon: FileText, badge: 'ATS Audit', color: 'from-purple-600 to-blue-600', textTone: 'text-purple-600', bgTone: 'bg-purple-50' },
+  { id: 'skills_gaps', label: 'Skills & Skill Gaps', icon: Sparkles, badge: 'Competency', color: 'from-blue-500 to-purple-500', textTone: 'text-blue-600', bgTone: 'bg-blue-50' },
+  { id: 'job_intelligence', label: 'Job Intelligence', icon: BriefcaseBusiness, badge: 'Target Role', color: 'from-blue-600 to-indigo-600', textTone: 'text-blue-600', bgTone: 'bg-blue-50' },
+  { id: 'interview_prep', label: 'Interview Preparation', icon: MessageSquare, badge: 'AI Mock', color: 'from-purple-600 to-pink-600', textTone: 'text-purple-600', bgTone: 'bg-purple-50' },
+  { id: 'career_roadmap', label: 'Career Roadmap', icon: Map, badge: 'Milestones', color: 'from-indigo-600 to-purple-600', textTone: 'text-indigo-600', bgTone: 'bg-indigo-50' },
 ];
 
 export const Dashboard14 = ({
@@ -147,7 +147,7 @@ export const Dashboard14 = ({
         </div>
       </div>
 
-      {/* Target Role & Skill Gap Goal Quick-Editor Bar */}
+      {/* Target Role Quick Bar */}
       <div className="bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-white border border-blue-200/80 rounded-3xl p-6 sm:p-8 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
@@ -156,25 +156,24 @@ export const Dashboard14 = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Target Career Goal</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Career Goal</span>
                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 border border-blue-200 rounded-full text-[10px] font-bold">
-                  Active Baseline
+                  Active Goal
                 </span>
               </div>
               <h2 className="text-2xl font-extrabold font-jakarta text-slate-900 mt-1">
                 {metrics?.target_role || 'Full Stack Engineer'}
               </h2>
               <p className="text-xs text-slate-500 mt-1 max-w-xl font-inter">
-                Skill gaps, roadmap milestones, and recommended jobs are dynamically synchronized for{' '}
-                <strong className="text-slate-800 font-semibold">{metrics?.target_role || 'Full Stack Engineer'}</strong> at a target benchmark of{' '}
-                <strong className="text-blue-600 font-semibold">{Math.round(metrics?.target_score || 80)}%</strong>.
+                Your progress toward becoming a{' '}
+                <strong className="text-slate-800 font-semibold">{metrics?.target_role || 'Full Stack Engineer'}</strong> based on your skills, resume analysis, and learning roadmap.
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-2xl border border-blue-100 shadow-xs">
-            <div className="text-center px-2">
-              <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">Overall Skill Gap</span>
+            <div className="text-center px-3">
+              <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">Skill Gap</span>
               <span className="text-2xl font-extrabold text-amber-600 font-jakarta">
                 {Math.round(metrics?.overall_skill_gap || 0)}%
               </span>
@@ -182,10 +181,10 @@ export const Dashboard14 = ({
 
             <div className="h-8 w-px bg-slate-200 hidden sm:block" />
 
-            <div className="text-center px-2">
-              <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">Target Benchmark</span>
+            <div className="text-center px-3">
+              <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">Career Readiness</span>
               <span className="text-2xl font-extrabold text-[#2563eb] font-jakarta">
-                {Math.round(metrics?.target_score || 80)}%
+                {Math.round(metrics?.readiness_score || 0)}%
               </span>
             </div>
 
@@ -194,7 +193,7 @@ export const Dashboard14 = ({
               className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200 flex items-center gap-1.5 cursor-pointer"
             >
               <Sliders className="w-3.5 h-3.5 text-slate-500" />
-              {editingTarget ? 'Close' : 'Adjust Target'}
+              {editingTarget ? 'Close' : 'Change Goal'}
             </button>
           </div>
         </div>
@@ -202,34 +201,23 @@ export const Dashboard14 = ({
         {/* Inline Goal Configuration Form */}
         {editingTarget && (
           <form onSubmit={handleSaveGoal} className="mt-6 pt-5 border-t border-blue-100 grid grid-cols-1 sm:grid-cols-12 gap-3 animate-fadeIn">
-            <div className="sm:col-span-6">
-              <label className="text-[11px] font-bold text-slate-700 block mb-1">Target Role</label>
+            <div className="sm:col-span-8">
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">Career Goal Role</label>
               <input
                 type="text"
                 value={targetRoleInput}
                 onChange={(e) => setTargetRoleInput(e.target.value)}
-                placeholder="e.g. Backend Engineer, Frontend Engineer, Data Scientist"
+                placeholder="e.g. Data Engineer, Backend Engineer, Frontend Engineer, Data Scientist"
                 className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-[#2563eb]"
               />
             </div>
-            <div className="sm:col-span-3">
-              <label className="text-[11px] font-bold text-slate-700 block mb-1">Target Score (0–100%)</label>
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={targetScoreInput}
-                onChange={(e) => setTargetScoreInput(e.target.value)}
-                className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-[#2563eb]"
-              />
-            </div>
-            <div className="sm:col-span-3 flex items-end">
+            <div className="sm:col-span-4 flex items-end">
               <button
                 type="submit"
                 disabled={savingGoal}
                 className="w-full py-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                {savingGoal ? 'Saving...' : 'Update & Recalculate'}
+                {savingGoal ? 'Saving...' : 'Update Career Goal'}
               </button>
             </div>
           </form>
@@ -356,7 +344,7 @@ export const Dashboard14 = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-lg font-bold font-jakarta text-slate-900 flex items-center gap-2">
-                  <BriefcaseBusiness className="w-5 h-5 text-[#16a34a]" /> Recommended Jobs for {metrics?.target_role || 'Target Role'}
+                  <BriefcaseBusiness className="w-5 h-5 text-[#3B82F6]" /> Recommended Jobs for {metrics?.target_role || 'Target Role'}
                 </h3>
                 <p className="text-xs text-slate-500 font-inter mt-0.5">
                   Based on your target role and verified skills
@@ -364,9 +352,9 @@ export const Dashboard14 = ({
               </div>
               <Link
                 to={`/jobs?q=${encodeURIComponent(metrics?.target_role || 'Software Engineer')}`}
-                className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold transition-all border border-emerald-200 flex items-center gap-1.5 shrink-0 cursor-pointer"
+                className="px-4 py-2 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:opacity-95 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
-                Search Adzuna Live <ExternalLink className="w-3.5 h-3.5" />
+                Search Live Jobs <ExternalLink className="w-3.5 h-3.5" />
               </Link>
             </div>
 
@@ -384,10 +372,10 @@ export const Dashboard14 = ({
                             <div className="flex items-center gap-1.5 mb-1.5">
                               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                                 job.tier === 'Direct Match'
-                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
                                   : job.tier === 'Related Opportunity' || job.tier === 'Adjacent Role'
-                                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                                  : 'bg-blue-100 text-blue-800 border border-blue-200'
+                                  ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                                  : 'bg-indigo-100 text-indigo-800 border border-indigo-200'
                               }`}>
                                 {job.tier || 'Direct Match'}
                               </span>
@@ -396,7 +384,7 @@ export const Dashboard14 = ({
                             <p className="text-xs text-slate-500 font-medium mt-0.5">{job.company || 'Direct Employer'} • {job.location || 'Remote / Hybrid'}</p>
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 font-extrabold text-xs rounded-full inline-block">
+                            <span className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 font-extrabold text-xs rounded-full inline-block">
                               {Math.round(job.match_score)}% skill match
                             </span>
                             <span className="block text-[10px] text-slate-400 mt-0.5">
@@ -407,13 +395,13 @@ export const Dashboard14 = ({
 
                         {/* Matching Skills */}
                         <div className="mt-3.5">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1 mb-1.5">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Matched Skills ({job.matched_skills?.length || 0})
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1 mb-1.5">
+                            <CheckCircle2 className="w-3 h-3 text-[#3B82F6]" /> Matched Skills ({job.matched_skills?.length || 0})
                           </span>
                           <div className="flex flex-wrap gap-1">
                             {job.matched_skills?.length > 0 ? (
                               job.matched_skills.map((s) => (
-                                <span key={s} className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/70 rounded-md text-[10px] font-semibold">
+                                <span key={s} className="px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200/70 rounded-md text-[10px] font-semibold">
                                   {s}
                                 </span>
                               ))
@@ -425,18 +413,18 @@ export const Dashboard14 = ({
 
                         {/* Particular Job Skill Gaps */}
                         <div className="mt-3">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 flex items-center gap-1 mb-1.5">
-                            <XCircle className="w-3 h-3 text-amber-600" /> Job Skill Gaps to Learn ({job.missing_skills?.length || 0})
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1 mb-1.5">
+                            <XCircle className="w-3 h-3 text-[#8B5CF6]" /> Job Skill Gaps to Learn ({job.missing_skills?.length || 0})
                           </span>
                           <div className="flex flex-wrap gap-1">
                             {job.missing_skills?.length > 0 ? (
                               job.missing_skills.map((s) => (
-                                <span key={s} className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200/70 rounded-md text-[10px] font-semibold">
+                                <span key={s} className="px-2 py-0.5 bg-purple-50 text-purple-800 border border-purple-200/70 rounded-md text-[10px] font-semibold">
                                   {s}
                                 </span>
                               ))
                             ) : (
-                              <span className="text-[10px] text-emerald-600 font-semibold">No skill gaps for this job!</span>
+                              <span className="text-[10px] text-blue-600 font-semibold">No skill gaps for this job!</span>
                             )}
                           </div>
                         </div>
@@ -448,12 +436,12 @@ export const Dashboard14 = ({
                             href={job.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-bold text-[#2563eb] hover:underline flex items-center gap-1"
+                            className="font-bold text-[#3B82F6] hover:underline flex items-center gap-1"
                           >
-                            Apply on Adzuna <ExternalLink className="w-3 h-3" />
+                            Apply for Position <ExternalLink className="w-3 h-3" />
                           </a>
                         ) : (
-                          <Link to={`/jobs?q=${encodeURIComponent(metrics?.target_role || job.title)}`} className="font-bold text-[#2563eb] hover:underline">
+                          <Link to={`/jobs?q=${encodeURIComponent(metrics?.target_role || job.title)}`} className="font-bold text-[#3B82F6] hover:underline">
                             View Job &rarr;
                           </Link>
                         )}
@@ -480,13 +468,13 @@ export const Dashboard14 = ({
                 <BriefcaseBusiness className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                 <p className="text-sm font-bold text-slate-800">No strong {metrics?.target_role || 'target role'} matches found right now.</p>
                 <p className="text-xs text-slate-500 mt-1 mb-4">
-                  Search live listings on Adzuna to discover available opportunities for <strong className="text-slate-700">{metrics?.target_role || 'your target role'}</strong>.
+                  Explore live listings to discover available opportunities for <strong className="text-slate-700">{metrics?.target_role || 'your target role'}</strong>.
                 </p>
                 <Link
                   to={`/jobs?q=${encodeURIComponent(metrics?.target_role || 'Software Engineer')}`}
-                  className="px-5 py-2.5 bg-[#16a34a] hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm inline-flex items-center gap-1.5"
+                  className="px-5 py-2.5 bg-[#2563eb] hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm inline-flex items-center gap-1.5"
                 >
-                  Search more {metrics?.target_role || 'Data Engineer'} jobs &rarr;
+                  Search more {metrics?.target_role || 'career'} jobs &rarr;
                 </Link>
               </div>
             )}
@@ -503,60 +491,60 @@ export const Dashboard14 = ({
             <div className="space-y-2">
               <Link
                 to="/resume"
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-blue-50 text-slate-800 hover:text-[#2563eb] text-xs font-bold transition-all border border-slate-100 group"
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-blue-50 text-slate-800 hover:text-[#3B82F6] text-xs font-bold transition-all border border-slate-100 group"
               >
                 <span className="flex items-center gap-2.5">
-                  <UploadCloud className="w-4 h-4 text-[#2563eb]" /> Upload & Scan Resume
+                  <UploadCloud className="w-4 h-4 text-[#3B82F6]" /> Upload & Scan Resume
                 </span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
 
               <Link
                 to="/skills"
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-amber-50 text-slate-800 hover:text-amber-700 text-xs font-bold transition-all border border-slate-100 group"
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-purple-50 text-slate-800 hover:text-[#8B5CF6] text-xs font-bold transition-all border border-slate-100 group"
               >
                 <span className="flex items-center gap-2.5">
-                  <Sparkles className="w-4 h-4 text-amber-600" /> Manage My Skills & Gap
+                  <Sparkles className="w-4 h-4 text-[#8B5CF6]" /> Manage My Skills & Gap
                 </span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
 
               <Link
                 to="/jobs"
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 text-xs font-bold transition-all border border-slate-100 group"
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-blue-50 text-slate-800 hover:text-[#3B82F6] text-xs font-bold transition-all border border-slate-100 group"
               >
                 <span className="flex items-center gap-2.5">
-                  <BriefcaseBusiness className="w-4 h-4 text-emerald-600" /> Search Adzuna Jobs
+                  <BriefcaseBusiness className="w-4 h-4 text-[#3B82F6]" /> Search Jobs
                 </span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
 
               <Link
                 to="/interview"
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-rose-50 text-slate-800 hover:text-rose-700 text-xs font-bold transition-all border border-slate-100 group"
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-purple-50 text-slate-800 hover:text-[#8B5CF6] text-xs font-bold transition-all border border-slate-100 group"
               >
                 <span className="flex items-center gap-2.5">
-                  <MessageSquare className="w-4 h-4 text-rose-600" /> Mock Interview Prep
+                  <MessageSquare className="w-4 h-4 text-[#8B5CF6]" /> Mock Interview Prep
                 </span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
 
               <Link
                 to="/career/roadmap"
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-purple-50 text-slate-800 hover:text-purple-700 text-xs font-bold transition-all border border-slate-100 group"
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-purple-50 text-slate-800 hover:text-[#8B5CF6] text-xs font-bold transition-all border border-slate-100 group"
               >
                 <span className="flex items-center gap-2.5">
-                  <Map className="w-4 h-4 text-purple-600" /> View Learning Roadmap
+                  <Map className="w-4 h-4 text-[#8B5CF6]" /> View Learning Roadmap
                 </span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
 
               <Link
                 to="/career"
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-cyan-50 text-slate-800 hover:text-cyan-700 text-xs font-bold transition-all border border-slate-100 group"
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 hover:bg-blue-50 text-slate-800 hover:text-[#3B82F6] text-xs font-bold transition-all border border-slate-100 group"
               >
                 <span className="flex items-center gap-2.5">
-                  <Lightbulb className="w-4 h-4 text-cyan-600" /> Ask AI Career Coach
+                  <Lightbulb className="w-4 h-4 text-[#3B82F6]" /> Ask AI Career Coach
                 </span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
@@ -574,12 +562,12 @@ export const Dashboard14 = ({
                 {metrics.recent_activity.map((act, idx) => (
                   <div key={idx} className="flex items-start gap-3 text-xs">
                     <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                      {act.type === 'resume_analysis' && <FileText className="w-3.5 h-3.5 text-[#2563eb]" />}
-                      {act.type === 'job_application' && <Bookmark className="w-3.5 h-3.5 text-[#16a34a]" />}
-                      {act.type === 'interview' && <MessageSquare className="w-3.5 h-3.5 text-[#e26d3d]" />}
+                      {act.type === 'resume_analysis' && <FileText className="w-3.5 h-3.5 text-[#3B82F6]" />}
+                      {act.type === 'job_application' && <Bookmark className="w-3.5 h-3.5 text-[#3B82F6]" />}
+                      {act.type === 'interview' && <MessageSquare className="w-3.5 h-3.5 text-[#8B5CF6]" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <Link to={act.link || '#'} className="font-semibold text-slate-800 hover:text-[#2563eb] line-clamp-1">
+                      <Link to={act.link || '#'} className="font-semibold text-slate-800 hover:text-[#3B82F6] line-clamp-1">
                         {act.title}
                       </Link>
                       <p className="text-slate-500 mt-0.5 truncate">{act.details}</p>

@@ -7,10 +7,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#f9f9ff',
-        primary: '#2563eb',
-        secondary: '#7c3aed',
-        accent: '#22c55e',
+        background: '#F8FAFF',
+        primary: '#3B82F6',
+        secondary: '#8B5CF6',
+        'purple-light': '#C4B5FD',
+        navy: '#0F172A',
+        accent: '#8B5CF6',
       },
       fontFamily: {
         inter: ['Inter', 'sans-serif'],

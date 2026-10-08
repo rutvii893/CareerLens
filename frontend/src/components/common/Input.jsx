@@ -13,7 +13,7 @@ const Input = ({ label, id, error, className = '', ...props }) => {
         className={`px-3 py-2 rounded-lg border font-inter text-sm outline-none transition-colors duration-200
           ${error 
             ? 'border-red-500 focus:border-red-500' 
-            : 'border-slate-300 focus:border-[#2563eb]'
+            : 'border-slate-300 focus:border-[#3B82F6] focus:ring-2 focus:ring-blue-500/10'
           }`}
         {...props}
       />
