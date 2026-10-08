@@ -421,50 +421,150 @@ def analyze_career_gap(resume: models.Resume | None, role: models.CareerRole, cu
     }
 
 
+def get_learning_resources(skill_name: str, target_role: str) -> dict:
+    """Generates valid learning resource links based on skill name."""
+    s_clean = skill_name.strip()
+    s_url = re.sub(r'[^a-zA-Z0-9]', '', s_clean).lower()
+    encoded = re.sub(r'\s+', '+', s_clean)
+    
+    # Authoritative documentation links for common technologies
+    doc_links = {
+        'python': 'https://docs.python.org/3/',
+        'sql': 'https://www.w3schools.com/sql/',
+        'postgresql': 'https://www.postgresql.org/docs/',
+        'pandas': 'https://pandas.pydata.org/docs/',
+        'react': 'https://react.dev/',
+        'javascript': 'https://developer.mozilla.org/en-US/docs/Web/JavaScript',
+        'typescript': 'https://www.typescriptlang.org/docs/',
+        'fastapi': 'https://fastapi.tiangolo.com/',
+        'docker': 'https://docs.docker.com/',
+        'git': 'https://git-scm.com/doc',
+        'aws': 'https://docs.aws.amazon.com/',
+        'spark': 'https://spark.apache.org/docs/latest/',
+        'airflow': 'https://airflow.apache.org/docs/',
+        'kafka': 'https://kafka.apache.org/documentation/',
+    }
+    
+    doc_url = doc_links.get(s_url, f'https://devdocs.io/#q={encoded}')
+    
+    return {
+        'youtube': [
+            {'title': f'{s_clean} Full Course for Beginners', 'url': f'https://www.youtube.com/results?search_query={encoded}+full+course'},
+            {'title': f'{s_clean} Tutorial for {target_role}', 'url': f'https://www.youtube.com/results?search_query={encoded}+{re.sub(r"\s+", "+", target_role)}'}
+        ],
+        'courses': [
+            {'title': f'freeCodeCamp: {s_clean} Guide', 'url': 'https://www.freecodecamp.org/news/search/?query=' + encoded},
+            {'title': f'Official Documentation & Tutorials', 'url': doc_url}
+        ],
+        'practice': [
+            {'title': f'LeetCode / HackerRank {s_clean} Practice', 'url': 'https://www.leetcode.com/problemset/all/'},
+            {'title': f'Kaggle {s_clean} Datasets & Practice', 'url': 'https://www.kaggle.com/search?q=' + encoded}
+        ]
+    }
+
+
 def build_roadmap(role: models.CareerRole, missing_skills: list[str], matching_skills: list[str] | None = None) -> list[dict]:
-    roadmap = []
+    """
+    Constructs a 4-Phase Career Roadmap adapted to the target role and user skills:
+    Phase 1 — FOUNDATION (Core verified & fundamental skills)
+    Phase 2 — SKILL DEVELOPMENT (Missing skills & gap-bridging)
+    Phase 3 — PROJECTS & PRACTICE (Practical project building & hands-on application)
+    Phase 4 — JOB READINESS (Resume, interviews, portfolio & career preparation)
+    """
+    role_name = role.name if role else 'Software Engineer'
+    req = role_skills(role) if role else ['Python', 'SQL', 'Git', 'REST API', 'Docker']
     matched = list(matching_skills or [])
+    missing = list(missing_skills or [s for s in req if s not in matched])
+    
+    # Phase 1: Foundation
+    phase1_skills = matched[:4] if matched else req[:2]
+    phase1_resources = [get_learning_resources(s, role_name) for s in phase1_skills[:2]] if phase1_skills else [get_learning_resources(req[0], role_name)]
+    
+    phase1 = {
+        'phase': 1,
+        'name': 'FOUNDATION',
+        'title': f'Phase 1 — FOUNDATION: Verify Core Prerequisites for {role_name}',
+        'objective': f'Build and verify the essential foundational concepts required for a successful {role_name} career path.',
+        'importance': f'Establishing strong fundamentals in {", ".join(phase1_skills[:3]) if phase1_skills else "core tools"} prevents technical debt and speeds up complex system development.',
+        'skills': phase1_skills if phase1_skills else ['Core Programming', 'Git Fundamentals'],
+        'tasks': [
+            {'task_id': 'p1_t1', 'title': f'Verify environment setup and core proficiency in {phase1_skills[0] if phase1_skills else "programming fundamentals"}', 'completed': True if matched else False, 'associated_skill': phase1_skills[0] if phase1_skills else 'Core Programming'},
+            {'task_id': 'p1_t2', 'title': f'Practice standard syntax, data structures, and algorithms for {role_name}', 'completed': True if matched else False, 'associated_skill': phase1_skills[1] if len(phase1_skills) > 1 else (phase1_skills[0] if phase1_skills else 'Data Structures')},
+            {'task_id': 'p1_t3', 'title': 'Configure version control (Git) workflow and remote repositories', 'completed': True if matched else False, 'associated_skill': 'Git'},
+        ],
+        'resources': phase1_resources,
+        'project_suggestion': f'Create a clean open-source repository showcasing fundamental operations in {phase1_skills[0] if phase1_skills else "core language"}.',
+        'expected_outcome': f'Demonstrate fluency in basic syntax, environment tooling, and fundamental problem-solving required for {role_name}.',
+        'status': 'completed' if matched else 'ready'
+    }
 
-    # Phase 1: Recognize user's verified baseline skills
-    if matched:
-        roadmap.append({
-            'phase': 1,
-            'title': f'Phase 1: Verified Baseline Strengths ({", ".join(matched[:3]) if len(matched) <= 3 else f"{len(matched)} skills verified"})',
-            'skills': matched,
-            'status': 'completed',
-        })
+    # Phase 2: Skill Development
+    phase2_skills = missing if missing else [s for s in req if s not in phase1_skills][:4]
+    if not phase2_skills:
+        phase2_skills = ['Advanced Architecture', 'Distributed Systems', 'Performance Tuning']
+    phase2_resources = [get_learning_resources(s, role_name) for s in phase2_skills[:3]]
+    
+    phase2 = {
+        'phase': 2,
+        'name': 'SKILL DEVELOPMENT',
+        'title': f'Phase 2 — SKILL DEVELOPMENT: Bridge Skill Gaps for {role_name}',
+        'objective': f'Acquire and master missing high-priority technical skills identified for {role_name}.',
+        'importance': f'Closing skill gaps in {", ".join(phase2_skills[:3])} directly increases your resume match percentage for target vacancies.',
+        'skills': phase2_skills,
+        'tasks': [
+            {'task_id': 'p2_t1', 'title': f'Learn core principles and hands-on usage of {phase2_skills[0] if phase2_skills else "missing skills"}', 'completed': False, 'associated_skill': phase2_skills[0] if phase2_skills else 'Missing Skill'},
+            {'task_id': 'p2_t2', 'title': f'Build mini-modules and unit tests using {phase2_skills[1] if len(phase2_skills) > 1 else phase2_skills[0]}', 'completed': False, 'associated_skill': phase2_skills[1] if len(phase2_skills) > 1 else phase2_skills[0]},
+            {'task_id': 'p2_t3', 'title': f'Practice real-world coding problems involving {", ".join(phase2_skills[:2])}', 'completed': False, 'associated_skill': phase2_skills[2] if len(phase2_skills) > 2 else phase2_skills[0]},
+        ],
+        'resources': phase2_resources,
+        'project_suggestion': f'Develop an end-to-end service or module integrating {", ".join(phase2_skills[:2])}.',
+        'expected_outcome': f'Able to independently write production-ready code using {", ".join(phase2_skills[:2])}.',
+        'status': 'ready' if matched else 'planned'
+    }
 
-    # Phases for Missing Skill Gaps
-    if missing_skills:
-        for index in range(0, len(missing_skills), 2):
-            chunk = missing_skills[index:index + 2]
-            phase_num = len(roadmap) + 1
-            is_first_gap = (len(roadmap) == (1 if matched else 0))
-            roadmap.append({
-                'phase': phase_num,
-                'title': f'Phase {phase_num}: Master {" & ".join(chunk)} for {role.name}',
-                'skills': chunk,
-                'status': 'ready' if is_first_gap else 'planned',
-            })
-    else:
-        # All required skills verified! Add advanced optimization phase
-        all_skills = role_skills(role)
-        phase_num = len(roadmap) + 1
-        roadmap.append({
-            'phase': phase_num,
-            'title': f'Phase {phase_num}: Advanced Production Pipelines & Scalability for {role.name}',
-            'skills': all_skills[:4] if all_skills else ['Scalability', 'Observability'],
-            'status': 'ready',
-        })
+    # Phase 3: Projects & Practice
+    phase3_skills = (phase2_skills[:2] + ['System Architecture', 'CI/CD Pipelines'])
+    phase3_resources = [get_learning_resources('System Design', role_name), get_learning_resources('Docker', role_name)]
+    
+    phase3 = {
+        'phase': 3,
+        'name': 'PROJECTS & PRACTICE',
+        'title': f'Phase 3 — PROJECTS & PRACTICE: Build Real Portfolio Applications',
+        'objective': 'Apply acquired technical skills through real implementation and capstone project building.',
+        'importance': 'Recruiters and engineering managers evaluate hands-on execution and repository quality over theoretical knowledge.',
+        'skills': phase3_skills,
+        'tasks': [
+            {'task_id': 'p3_t1', 'title': f'Architect and implement a capstone project tailored for a {role_name}', 'completed': False, 'associated_skill': phase3_skills[0] if phase3_skills else 'System Architecture'},
+            {'task_id': 'p3_t2', 'title': 'Containerize application components using Docker and automate builds with CI/CD', 'completed': False, 'associated_skill': 'Docker'},
+            {'task_id': 'p3_t3', 'title': 'Write comprehensive API documentation and detailed README with architecture diagrams', 'completed': False, 'associated_skill': 'REST API'},
+        ],
+        'resources': phase3_resources,
+        'project_suggestion': f'Full-featured production capstone project: {role_name} pipeline/service with live deployment and monitoring.',
+        'expected_outcome': 'A fully deployed, open-source portfolio project showcasing production quality and architecture.',
+        'status': 'planned'
+    }
 
-    # Final Phase: Capstone Project & Portfolio Interview Readiness
-    capstone_num = len(roadmap) + 1
-    roadmap.append({
-        'phase': capstone_num,
-        'title': f'Phase {capstone_num}: Capstone Portfolio Project & {role.name} Interview Readiness',
-        'skills': [f'{role.name} Architecture', 'System Design', 'Behavioral Interview Prep'],
-        'status': 'planned',
-    })
+    # Phase 4: Job Readiness
+    phase4_skills = [f'{role_name} System Design', 'Behavioral Preparation', 'ATS Optimization']
+    phase4_resources = [get_learning_resources('System Design', role_name), get_learning_resources('Mock Interview', role_name)]
+    
+    phase4 = {
+        'phase': 4,
+        'name': 'JOB READINESS',
+        'title': f'Phase 4 — JOB READINESS: Resume, Interviews & Portfolio Preparation',
+        'objective': 'Prepare your resume, online applications, technical mock interviews, and recruiter strategy.',
+        'importance': 'Converting technical skills into job offers requires structured interview performance and ATS optimization.',
+        'skills': phase4_skills,
+        'tasks': [
+            {'task_id': 'p4_t1', 'title': f'Optimize resume ATS score for {role_name} using CareerLens Resume Intelligence', 'completed': False, 'associated_skill': 'ATS Optimization'},
+            {'task_id': 'p4_t2', 'title': f'Complete 3 role-specific mock interview practice runs in CareerLens AI Coach', 'completed': False, 'associated_skill': 'Interview Prep'},
+            {'task_id': 'p4_t3', 'title': f'Apply to matched {role_name} vacancies on Job Search board', 'completed': False, 'associated_skill': 'Job Search'},
+        ],
+        'resources': phase4_resources,
+        'project_suggestion': 'Tailor bullet points using the STAR method for technical & behavioral interview storytelling.',
+        'expected_outcome': f'Fully prepared to excel in technical screening and land top {role_name} job offers.',
+        'status': 'planned'
+    }
 
-    return roadmap
+    return [phase1, phase2, phase3, phase4]
 

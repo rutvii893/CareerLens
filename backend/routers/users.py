@@ -97,32 +97,48 @@ def get_user_skills(db: Session = Depends(get_db), current_user: schemas.UserRea
     extracted_lower = {s.lower() for s in extracted}
     custom_lower = {s.lower() for s in custom}
 
+    # Build user skill map with source & learning_progress
+    user_skills_map = {} # skill_lower -> {name, source, learning_progress}
+    for s in extracted:
+        user_skills_map[s.lower()] = {'name': s, 'source': 'resume', 'learning_progress': 0.0}
+    for s in custom:
+        if s.lower() not in user_skills_map:
+            user_skills_map[s.lower()] = {'name': s, 'source': 'custom', 'learning_progress': 0.0}
+
+    # Merge skill assessments (keyed either exact or lower)
+    for s, meta in skill_assessments.items():
+        s_low = s.lower()
+        lp = float(meta.get('learning_progress', meta.get('current_score', 0.0)))
+        if s_low in user_skills_map:
+            user_skills_map[s_low]['learning_progress'] = lp
+        else:
+            user_skills_map[s_low] = {'name': s, 'source': 'assessed', 'learning_progress': lp}
+
     for skill in all_evaluated_skills:
         s_lower = skill.lower()
-        if skill in skill_assessments:
-            c_score = float(skill_assessments[skill].get('current_score', 0.0))
-            t_score = float(skill_assessments[skill].get('target_score', target_score))
-            source_tag = 'assessed'
-        elif s_lower in extracted_lower:
-            c_score = 75.0
-            t_score = target_score
-            source_tag = 'resume'
-        elif s_lower in custom_lower:
-            c_score = 65.0
-            t_score = target_score
-            source_tag = 'custom'
+        if s_lower in user_skills_map:
+            info = user_skills_map[s_lower]
+            learning_pct = info['learning_progress']
+            # Skill is present/detected on user profile/resume.
+            detected = True
+            c_score = max(100.0 if detected else 0.0, learning_pct)
+            source_tag = info['source']
+            gap_pct = max(0.0, round(100.0 - c_score, 1))
+            status_label = 'meets_target'
+            learning_progress_val = learning_pct
         else:
             c_score = 0.0
             t_score = target_score
             source_tag = 'missing'
+            gap_pct = 100.0
+            status_label = 'missing'
+            learning_progress_val = 0.0
 
-        gap_pct = round(max(0.0, t_score - c_score) / t_score * 100.0, 1) if t_score > 0 else 0.0
+        t_score = target_score
         
         # Only required skills count toward overall role gap
         if skill in req_skills:
             individual_gaps.append(gap_pct)
-
-        status_label = 'meets_target' if c_score >= t_score else ('missing' if c_score == 0 else 'needs_improvement')
         
         # Category lookup
         skill_cat = 'Other'
@@ -139,6 +155,7 @@ def get_user_skills(db: Session = Depends(get_db), current_user: schemas.UserRea
             gap_percentage=gap_pct,
             status=status_label,
             source=source_tag,
+            learning_progress=learning_progress_val,
         )
         assessments.append(item)
         if status_label == 'meets_target':

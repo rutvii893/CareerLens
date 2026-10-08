@@ -107,9 +107,9 @@ export default function LineWaves({
   edgeFadeWidth = 0,
   colorCycleSpeed = 1.0,
   brightness = 0.15,
-  color1 = '#2563eb',
-  color2 = '#7c3aed',
-  color3 = '#22c55e',
+  color1 = '#3B82F6',
+  color2 = '#8B5CF6',
+  color3 = '#3B82F6',
   enableMouseInteraction = true,
   mouseInfluence = 1.5,
   className = ''

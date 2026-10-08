@@ -241,7 +241,9 @@ CareerLens/
 
 ### Run Backend Automated Tests
 ```powershell
-.\backend\venv\Scripts\pytest backend/tests -v
+.\backend\venv\Scripts\python.exe -m 
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+
 ```
 *All 22 integration and unit tests validate authentication, target-role recommendations, skill gap calculations, career roadmaps, interview evaluations, and user isolation.*
 

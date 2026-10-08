@@ -156,8 +156,16 @@ def update_roadmap_phase(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    """Toggle or update completion status for a specific roadmap phase milestone."""
-    updated = crud.update_career_roadmap_phase(db, roadmap_id, current_user.id, phase_idx, phase_update.status)
+    """Toggle or update completion status for a specific roadmap phase milestone or individual task."""
+    updated = crud.update_career_roadmap_phase(
+        db,
+        roadmap_id,
+        current_user.id,
+        phase_idx,
+        phase_update.status or 'ready',
+        phase_update.task_id,
+        phase_update.task_completed,
+    )
     if not updated:
         raise HTTPException(status_code=404, detail='Roadmap or phase not found')
     return _format_roadmap_response(updated, db)

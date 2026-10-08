@@ -302,10 +302,10 @@ const InterviewPrep = () => {
                       Submit for Evaluation
                     </button>
                   </div>
-                ) : (
+                 ) : (
                   <div className="py-12 text-center">
-                    <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-3" />
-                    <h2 className="text-xl font-bold font-jakarta text-slate-900">
+                    <CheckCircle2 className="w-16 h-16 text-[#3B82F6] mx-auto mb-3" />
+                    <h2 className="text-xl font-bold font-jakarta text-[#0F172A]">
                       Interview Complete!
                     </h2>
                     <p className="text-sm text-slate-500 mt-1 mb-6">
@@ -313,7 +313,7 @@ const InterviewPrep = () => {
                     </p>
                     <button
                       onClick={handleStartSession}
-                      className="px-6 py-2.5 bg-[#e26d3d] text-white rounded-xl text-xs font-bold hover:bg-orange-600"
+                      className="px-6 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white rounded-xl text-xs font-bold hover:opacity-95 cursor-pointer"
                     >
                       Start Another Session
                     </button>
@@ -324,28 +324,28 @@ const InterviewPrep = () => {
               {/* Instant Evaluation Feedback Panel */}
               <div className="lg:col-span-4 space-y-4">
                 <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-                  <h3 className="text-sm font-bold font-jakarta text-slate-900 mb-4 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#e26d3d]" /> Live Answer Feedback
+                  <h3 className="text-sm font-bold font-jakarta text-[#0F172A] mb-4 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#8B5CF6]" /> Live Answer Feedback
                   </h3>
 
                   {evaluation ? (
                     <div className="space-y-4">
                       <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
                         <span className="text-xs font-semibold text-slate-600">Question Score</span>
-                        <span className="text-xl font-extrabold font-jakarta text-[#e26d3d]">
+                        <span className="text-xl font-extrabold font-jakarta text-[#3B82F6]">
                           {Math.round(evaluation.score)}<span className="text-xs text-slate-400">/100</span>
                         </span>
                       </div>
 
                       {evaluation.strengths?.length > 0 && (
                         <div>
-                          <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 block mb-1.5">
+                          <span className="text-xs font-bold uppercase tracking-wider text-blue-700 block mb-1.5">
                             Strengths Identified
                           </span>
                           <ul className="space-y-1">
                             {evaluation.strengths.map((s, idx) => (
-                              <li key={idx} className="text-xs text-emerald-800 flex items-start gap-1.5">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                              <li key={idx} className="text-xs text-blue-800 flex items-start gap-1.5">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[#3B82F6] shrink-0 mt-0.5" />
                                 <span>{s}</span>
                               </li>
                             ))}

@@ -235,8 +235,8 @@ const SkillsDashboard = () => {
 
       {/* Action Notification */}
       {actionMessage && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center gap-2 animate-fadeIn shadow-xs">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center gap-2 animate-fadeIn shadow-xs">
+          <CheckCircle2 className="w-4 h-4 text-[#3B82F6] shrink-0" />
           {actionMessage}
         </div>
       )}
@@ -252,7 +252,7 @@ const SkillsDashboard = () => {
       <div className="bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-white border border-blue-200/80 rounded-3xl p-6 sm:p-8 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#2563eb] text-white flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-12 h-12 rounded-2xl bg-[#3B82F6] text-white flex items-center justify-center shrink-0 shadow-sm">
               <Target className="w-6 h-6" />
             </div>
             <div>
@@ -262,7 +262,7 @@ const SkillsDashboard = () => {
                   Active
                 </span>
               </div>
-              <h2 className="text-2xl font-extrabold font-jakarta text-slate-900 mt-1">
+              <h2 className="text-2xl font-extrabold font-jakarta text-[#0F172A] mt-1">
                 {targetRole}
               </h2>
               <p className="text-xs text-slate-500 mt-1 max-w-xl font-inter">
@@ -283,7 +283,7 @@ const SkillsDashboard = () => {
 
             <div className="text-center px-3">
               <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">Target Benchmark</span>
-              <span className="text-2xl font-extrabold text-[#2563eb] font-jakarta">
+              <span className="text-2xl font-extrabold text-[#3B82F6] font-jakarta">
                 {Math.round(targetScore)}%
               </span>
             </div>
@@ -292,7 +292,7 @@ const SkillsDashboard = () => {
 
             <div className="text-center px-3">
               <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">Meeting Target</span>
-              <span className="text-2xl font-extrabold text-emerald-600 font-jakarta">
+              <span className="text-2xl font-extrabold text-[#3B82F6] font-jakarta">
                 {meetingCount} / {enrichedSkills.length}
               </span>
             </div>
@@ -463,8 +463,8 @@ const SkillsDashboard = () => {
                 onClick={() => setActiveFilter('meets')}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   activeFilter === 'meets'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                    ? 'bg-[#3B82F6] text-white shadow-xs'
+                    : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
                 }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" /> Meets Target ({meetingCount})
@@ -499,14 +499,14 @@ const SkillsDashboard = () => {
               key={s.name}
               className={`p-5 rounded-3xl border transition-all flex flex-col justify-between ${
                 s.meets
-                  ? 'bg-white border-emerald-100 hover:border-emerald-300'
+                  ? 'bg-white border-blue-100 hover:border-blue-300'
                   : 'bg-white border-amber-100 hover:border-amber-300'
               } shadow-sm`}
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div>
-                    <h3 className="text-sm font-bold font-jakarta text-slate-900 flex items-center gap-1.5">
+                    <h3 className="text-sm font-bold font-jakarta text-[#0F172A] flex items-center gap-1.5">
                       {s.name}
                       {s.isCustom && (
                         <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-md font-semibold">
@@ -530,7 +530,7 @@ const SkillsDashboard = () => {
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       s.meets
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
                         : s.current === 0
                         ? 'bg-rose-50 text-rose-700 border border-rose-200'
                         : 'bg-amber-50 text-amber-700 border border-amber-200'
@@ -547,13 +547,13 @@ const SkillsDashboard = () => {
                       Current: <strong className="text-slate-800">{s.current}%</strong>
                     </span>
                     <span className="text-slate-500 font-medium">
-                      Target: <strong className="text-blue-600">{s.target}%</strong>
+                      Target: <strong className="text-[#3B82F6]">{s.target}%</strong>
                     </span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-2 rounded-full transition-all duration-300 ${
-                        s.meets ? 'bg-emerald-500' : (s.current === 0 ? 'bg-rose-400' : 'bg-amber-500')
+                        s.meets ? 'bg-[#3B82F6]' : (s.current === 0 ? 'bg-rose-400' : 'bg-amber-500')
                       }`}
                       style={{ width: `${Math.min(100, s.current)}%` }}
                     />

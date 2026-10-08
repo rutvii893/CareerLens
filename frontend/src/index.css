@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #f8fafc;
-  --color-primary: #2563eb;
-  --color-secondary: #7c3aed;
-  --color-accent: #22c55e;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #64748b;
+  --color-background: #F8FAFF;
+  --color-primary: #3B82F6;
+  --color-secondary: #8B5CF6;
+  --color-accent: #8B5CF6;
+  --color-purple-light: #C4B5FD;
+  --color-navy: #0F172A;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #64748B;
   --color-border: #e2e8f0;
   --font-inter: "Inter", sans-serif;
   --font-jakarta: "Plus Jakarta Sans", sans-serif;
@@ -22,7 +24,7 @@
 
 /* App & Layout classes */
 .app-shell {
-  background-color: #f8fafc;
+  background-color: #F8FAFF;
   min-height: 100vh;
 }
 
@@ -62,7 +64,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #2563eb;
+  color: #3B82F6;
   margin-bottom: 0.25rem;
 }
 
@@ -71,7 +73,7 @@
   font-size: 1.875rem;
   line-height: 2.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #0F172A;
 }
 
 .section-label {
@@ -79,11 +81,11 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #64748B;
 }
 
 .muted {
-  color: #64748b;
+  color: #64748B;
 }
 
 /* Forms & Inputs */
@@ -106,14 +108,14 @@
   border: 1px solid #cbd5e1;
   border-radius: 0.625rem;
   font-size: 0.875rem;
-  color: #0f172a;
+  color: #0F172A;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-input:focus, .input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 /* Buttons */
@@ -136,15 +138,15 @@
 }
 
 .button-primary {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
   color: #ffffff;
   border: none;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 .button-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+  background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
 }
 
 .button-quiet {
@@ -155,7 +157,7 @@
 
 .button-quiet:hover:not(:disabled) {
   background-color: #e2e8f0;
-  color: #0f172a;
+  color: #0F172A;
 }
 
 .icon-button {
@@ -164,15 +166,15 @@
   justify-content: center;
   padding: 0.5rem;
   border-radius: 0.5rem;
-  color: #64748b;
+  color: #64748B;
   border: 1px solid #e2e8f0;
   background: #ffffff;
   transition: all 0.2s;
 }
 
 .icon-button:hover {
-  background: #f8fafc;
-  color: #0f172a;
+  background: #F8FAFF;
+  color: #0F172A;
 }
 
 /* Tags & Badges */
@@ -198,7 +200,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2563eb, #7c3aed);
+  background: linear-gradient(90deg, #3B82F6, #8B5CF6);
   border-radius: 9999px;
   transition: width 0.3s ease;
 }
@@ -208,7 +210,7 @@
   width: 2.75rem;
   height: 2.75rem;
   border-radius: 9999px;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
   color: #ffffff;
   display: flex;
   align-items: center;

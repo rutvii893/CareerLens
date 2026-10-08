@@ -242,12 +242,12 @@ const ResumeAnalysis = () => {
                   >
                     <div className="flex items-center gap-2.5">
                       {isPresent ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-[#3B82F6] shrink-0" />
                       ) : (
                         <XCircle className="w-5 h-5 text-amber-500 shrink-0" />
                       )}
                       <div>
-                        <span className="text-sm font-bold text-slate-800 capitalize">{secKey} Section</span>
+                        <span className="text-sm font-bold text-[#0F172A] capitalize">{secKey} Section</span>
                         <p className="text-xs text-slate-500">
                           {isPresent
                             ? 'Detected with standard header terminology'
@@ -257,7 +257,7 @@ const ResumeAnalysis = () => {
                     </div>
                     <span
                       className={`px-2.5 py-0.5 rounded-md text-xs font-bold ${
-                        isPresent ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                        isPresent ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
                       }`}
                     >
                       {isPresent ? 'Passed' : 'Needs Header'}
@@ -270,8 +270,8 @@ const ResumeAnalysis = () => {
 
           {/* Detected Skills Cloud */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-            <h2 className="text-base font-bold font-jakarta text-slate-900 mb-3 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#e26d3d]" /> Detected Skills ({analysis.extracted_skills?.length || 0})
+            <h2 className="text-base font-bold font-jakarta text-[#0F172A] mb-3 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#8B5CF6]" /> Detected Skills ({analysis.extracted_skills?.length || 0})
             </h2>
             <p className="text-xs text-slate-500 mb-4">
               These terms were extracted directly from your resume text and are used to match live vacancies.
@@ -296,15 +296,15 @@ const ResumeAnalysis = () => {
         {/* Right Column: Recommendations */}
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-            <h2 className="text-base font-bold font-jakarta text-slate-900 mb-4 flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-[#7c3aed]" /> Actionable Suggestions
+            <h2 className="text-base font-bold font-jakarta text-[#0F172A] mb-4 flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-[#8B5CF6]" /> Actionable Suggestions
             </h2>
 
             {analysis.recommendations?.length > 0 ? (
               <div className="space-y-3">
                 {analysis.recommendations.map((rec, idx) => (
                   <div key={idx} className="p-3.5 bg-purple-50/50 border border-purple-100 rounded-xl flex items-start gap-3">
-                    <CheckCircle2 className="w-4 h-4 text-[#7c3aed] shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-[#8B5CF6] shrink-0 mt-0.5" />
                     <p className="text-xs text-slate-700 leading-relaxed font-medium">{rec}</p>
                   </div>
                 ))}
@@ -320,8 +320,8 @@ const ResumeAnalysis = () => {
       <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
         <div className="border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2 mb-1">
-            <Target className="w-5 h-5 text-[#2563eb]" />
-            <h2 className="text-lg font-bold font-jakarta text-slate-900">
+            <Target className="w-5 h-5 text-[#3B82F6]" />
+            <h2 className="text-lg font-bold font-jakarta text-[#0F172A]">
               Job-Specific ATS Match Calculator
             </h2>
           </div>
@@ -336,7 +336,7 @@ const ResumeAnalysis = () => {
             onChange={(e) => setJobDescription(e.target.value)}
             placeholder="Paste the full job description here (requirements, responsibilities, required tech stack)..."
             rows={5}
-            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#2563eb] leading-relaxed"
+            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#3B82F6] leading-relaxed"
           />
 
           {matchingError && (
@@ -349,7 +349,7 @@ const ResumeAnalysis = () => {
           <button
             type="submit"
             disabled={matchingLoading || !jobDescription.trim()}
-            className="px-6 py-2.5 bg-[#2563eb] hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+            className="px-6 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:opacity-95 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             {matchingLoading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             Calculate Job-Specific ATS Match
@@ -362,7 +362,7 @@ const ResumeAnalysis = () => {
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Job Match Score</span>
                 <div className="flex items-baseline gap-1 mt-0.5">
-                  <span className="text-3xl font-extrabold font-jakarta text-[#2563eb]">
+                  <span className="text-3xl font-extrabold font-jakarta text-[#3B82F6]">
                     {Math.round(jobMatchResult.match_score)}%
                   </span>
                 </div>
@@ -374,13 +374,13 @@ const ResumeAnalysis = () => {
 
             <div className="grid sm:grid-cols-2 gap-4 text-xs">
               <div className="bg-white p-4 rounded-xl border border-slate-200">
-                <span className="font-bold text-emerald-700 flex items-center gap-1.5 mb-2">
-                  <CheckCircle2 className="w-4 h-4" /> Matched Skills ({jobMatchResult.matched_skills?.length || 0})
+                <span className="font-bold text-blue-700 flex items-center gap-1.5 mb-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#3B82F6]" /> Matched Skills ({jobMatchResult.matched_skills?.length || 0})
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {jobMatchResult.matched_skills?.length > 0 ? (
                     jobMatchResult.matched_skills.map((s) => (
-                      <span key={s} className="px-2.5 py-1 bg-emerald-50 text-emerald-800 rounded-md font-medium border border-emerald-200">
+                      <span key={s} className="px-2.5 py-1 bg-blue-50 text-blue-800 rounded-md font-medium border border-blue-200">
                         {s}
                       </span>
                     ))

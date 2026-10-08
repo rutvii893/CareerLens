@@ -17,8 +17,14 @@ export const careerService = {
     const response = await api.post('/career/roadmap', { resume_id: resumeId || null, target_role: targetRole });
     return response.data;
   },
-  updateRoadmapPhase: async (roadmapId, phaseIdx, status) => {
-    const response = await api.patch(`/career/roadmap/${roadmapId}/phase/${phaseIdx}`, { status });
+  updateRoadmapPhase: async (roadmapId, phaseIdx, status, taskId = null, taskCompleted = null) => {
+    const payload = {};
+    if (status) payload.status = status;
+    if (taskId) {
+      payload.task_id = taskId;
+      payload.task_completed = taskCompleted;
+    }
+    const response = await api.patch(`/career/roadmap/${roadmapId}/phase/${phaseIdx}`, payload);
     return response.data;
   },
   listRoadmaps: async () => {
