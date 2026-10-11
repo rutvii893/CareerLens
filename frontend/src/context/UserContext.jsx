@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { userService } from '../services/userService';
+import { clearAccessToken, getAccessToken } from '../services/tokenStorage';
 
 const UserContext = createContext(null);
 
@@ -11,7 +12,7 @@ export const UserProvider = ({ children }) => {
   const [refreshIndex, setRefreshIndex] = useState(0);
 
   const fetchUserData = useCallback(async () => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (!token) {
       setLoading(false);
       return;
@@ -89,8 +90,7 @@ export const UserProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('token_type');
+    clearAccessToken();
     localStorage.removeItem('cl_target_role');
     localStorage.removeItem('cl_target_score');
     setUser(null);

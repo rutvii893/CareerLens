@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { clearAccessToken, getAccessToken } from './tokenStorage';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
@@ -10,7 +11,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,7 +27,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       const isPublic = ['/login', '/register', '/'].includes(window.location.pathname);
       if (!isPublic) {
-        localStorage.removeItem('token');
+        clearAccessToken();
         window.location.href = '/login';
       }
     }

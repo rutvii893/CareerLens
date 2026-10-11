@@ -8,13 +8,14 @@ import {
   LoaderCircle,
   LockKeyhole,
   Mail,
-  Sparkles,
 } from 'lucide-react';
 import CareerLensLogo from '../components/common/CareerLensLogo';
 import { authService } from '../services/authService';
+import { useUser } from '../context/UserContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { refreshUserData } = useUser();
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -30,6 +31,7 @@ const Login = () => {
     setError('');
     try {
       await authService.login(credentials);
+      refreshUserData();
       navigate('/dashboard');
     } catch (requestError) {
       console.error('Login error:', requestError);

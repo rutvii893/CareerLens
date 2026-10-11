@@ -1,9 +1,10 @@
 import api from './api';
+import { clearAccessToken, setAccessToken } from './tokenStorage';
 
 export const authService = {
   login: async (credentials) => {
     const response = await api.post('/auth/login', credentials);
-    localStorage.setItem('token', response.data.access_token);
+    setAccessToken(response.data.access_token, response.data.token_type);
     return response.data;
   },
   register: async (userData) => {
@@ -11,6 +12,6 @@ export const authService = {
     return response.data;
   },
   logout: () => {
-    localStorage.removeItem('token');
+    clearAccessToken();
   }
 };

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import models
 from .config import settings
 from .database import SessionLocal, engine, ensure_db_defaults, ensure_interview_columns
-from .routers import auth, users, resumes, matching, career, interview, jobs
+from .routers import auth, users, resumes, matching, career, interview, jobs, generated_resumes
 from .services.career_intelligence import ensure_default_roles
 
 models.Base.metadata.create_all(bind=engine)
@@ -39,6 +39,7 @@ app.include_router(matching.router, prefix='/api/v1')
 app.include_router(career.router, prefix='/api/v1')
 app.include_router(interview.router, prefix='/api/v1')
 app.include_router(jobs.router, prefix='/api/v1')
+app.include_router(generated_resumes.router, prefix='/api/v1')
 
 @app.get('/')
 def root():

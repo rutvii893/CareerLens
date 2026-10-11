@@ -23,6 +23,7 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     resumes = relationship('Resume', back_populates='user', cascade='all, delete-orphan')
+    generated_resumes = relationship('GeneratedResume', back_populates='user', cascade='all, delete-orphan')
     applications = relationship('Application', back_populates='user', cascade='all, delete-orphan')
     interview_sessions = relationship('InterviewSession', back_populates='user', cascade='all, delete-orphan')
     career_roadmaps = relationship('CareerRoadmap', back_populates='user', cascade='all, delete-orphan')
@@ -74,6 +75,36 @@ class ResumeAnalysis(Base):
     __table_args__ = (
         CheckConstraint('overall_score IS NULL OR (overall_score >= 0 AND overall_score <= 100)', name='ck_ats_results_overall_score_range'),
         CheckConstraint('keyword_score IS NULL OR (keyword_score >= 0 AND keyword_score <= 100)', name='ck_ats_results_keyword_score_range'),
+    )
+
+
+class GeneratedResume(Base):
+    __tablename__ = 'generated_resumes'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    career_role = Column(String(255), nullable=False)
+    template = Column(String(32), nullable=False, default='classic', server_default='classic')
+    technical_skills = Column(JSON, nullable=False, default=list)
+    soft_skills = Column(JSON, nullable=False, default=list)
+    certifications = Column(JSON, nullable=False, default=list)
+    hackathons = Column(JSON, nullable=False, default=list)
+    achievements = Column(JSON, nullable=False, default=list)
+    projects = Column(JSON, nullable=False, default=list)
+    education = Column(JSON, nullable=False, default=list)
+    experience = Column(JSON, nullable=False, default=list)
+    contact = Column(JSON, nullable=False, default=dict)
+    summary = Column(Text, nullable=True)
+    current_step = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    user = relationship('User', back_populates='generated_resumes')
+
+    __table_args__ = (
+        CheckConstraint("length(trim(career_role)) > 0", name='ck_generated_resumes_role_not_blank'),
+        CheckConstraint('current_step >= 1 AND current_step <= 12', name='ck_generated_resumes_step_range'),
     )
 
 
