@@ -35,10 +35,17 @@ const Login = () => {
       navigate('/dashboard');
     } catch (requestError) {
       console.error('Login error:', requestError);
-      setError(
-        requestError.response?.data?.detail ||
-          'Invalid email or password. Please check your credentials and try again.'
-      );
+      let errorMsg = 'Invalid email or password. Please check your credentials and try again.';
+      if (requestError.code === 'ECONNABORTED' || requestError.message?.includes('timeout')) {
+        errorMsg = 'Server response timed out. Please check that the backend is running and can reach the database.';
+      } else if (!requestError.response) {
+        errorMsg = 'Cannot connect to CareerLens server. Please ensure the backend is running at http://localhost:8000.';
+      } else if (requestError.response?.data?.detail) {
+        errorMsg = Array.isArray(requestError.response.data.detail)
+          ? requestError.response.data.detail.map(d => d.msg || d).join(', ')
+          : requestError.response.data.detail;
+      }
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

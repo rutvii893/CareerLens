@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UploadCloud, File, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { UploadCloud, FileText, AlertCircle, CheckCircle2, ArrowRight, ShieldCheck, FileCheck } from 'lucide-react';
 import api from '../services/api';
 
 const ResumeAnalyzer = () => {
@@ -19,7 +19,7 @@ const ResumeAnalyzer = () => {
 
   const handleUpload = async () => {
     if (!file) {
-      setError('Please select a file first.');
+      setError('Please select a resume file first.');
       return;
     }
 
@@ -30,89 +30,131 @@ const ResumeAnalyzer = () => {
     setError('');
 
     try {
-      // Connect to real backend endpoint
       const response = await api.post('/resumes/upload', formData);
       setResult(response.data);
     } catch (err) {
       console.error('Upload failed:', err);
-      setError(err.response?.data?.detail || 'Upload failed. Please ensure you are logged in and the file is a valid PDF or DOCX.');
+      setError(err.response?.data?.detail || 'Upload failed. Please ensure the file is a readable PDF or DOCX under 10MB.');
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-[1280px] mx-auto w-full">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold font-jakarta text-[#0f172a] mb-2">Resume Analyzer</h1>
-        <p className="text-[#64748b] font-inter">Upload your resume to analyze your ATS compatibility and identify improvement areas.</p>
+    <div className="page-container space-y-6">
+      {/* Header */}
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="badge-blue text-[11px]">Resume Intelligence</span>
+          <span className="text-xs text-slate-400">• ATS Compliance Engine</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold font-jakarta text-slate-900 tracking-tight">
+          Resume Analyzer & ATS Audit
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 font-inter mt-1 max-w-2xl">
+          Upload your resume in PDF or DOCX format to parse demonstrated skills, audit applicant tracking system compatibility, and identify missing keywords.
+        </p>
       </div>
 
-      <div className="bg-white p-8 rounded-2xl border border-[#e2e8f0] shadow-sm max-w-2xl mx-auto text-center">
+      <div className="card-base p-6 sm:p-10 max-w-2xl mx-auto">
         {!result ? (
-          <>
-            <div className="border-2 border-dashed border-[#e2e8f0] rounded-xl p-10 bg-slate-50 mb-6 flex flex-col items-center justify-center transition-colors hover:border-[#2563eb]">
-              <UploadCloud className="w-16 h-16 text-[#64748b] mb-4" />
-              <p className="text-[#0f172a] font-bold text-lg mb-1">Drag & drop your resume here</p>
-              <p className="text-[#64748b] text-sm mb-4">PDF or DOCX</p>
-              <input 
-                type="file" 
-                className="hidden" 
-                id="resume-upload" 
-                accept=".pdf,.docx" 
-                onChange={handleFileChange} 
+          <div className="space-y-6">
+            <div className="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-2xl p-8 sm:p-10 bg-slate-50/50 flex flex-col items-center justify-center text-center transition-all">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+                <UploadCloud className="w-7 h-7" />
+              </div>
+              <h3 className="text-sm sm:text-base font-bold font-jakarta text-slate-900 mb-1">
+                Drag & drop your resume here, or browse files
+              </h3>
+              <p className="text-xs text-slate-500 mb-5 max-w-xs font-inter">
+                Supports standard PDF and DOCX formats up to 10MB
+              </p>
+              <input
+                type="file"
+                className="hidden"
+                id="resume-upload"
+                accept=".pdf,.docx"
+                onChange={handleFileChange}
               />
-              <label 
-                htmlFor="resume-upload" 
-                className="px-6 py-2 bg-white border border-[#e2e8f0] text-[#0f172a] rounded-lg font-medium cursor-pointer shadow-sm hover:bg-slate-50 transition-colors"
+              <label
+                htmlFor="resume-upload"
+                className="btn-secondary text-xs"
               >
-                Browse Files
+                Choose Local File
               </label>
             </div>
 
             {file && (
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-100 mb-6 text-left">
-                <div className="flex items-center gap-3">
-                  <File className="text-[#2563eb] w-6 h-6" />
-                  <div>
-                    <p className="text-sm font-semibold text-[#0f172a]">{file.name}</p>
-                    <p className="text-xs text-[#64748b]">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+              <div className="flex items-center justify-between p-3.5 bg-blue-50/60 rounded-xl border border-blue-200/70 text-left animate-fadeIn">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-900 truncate">{file.name}</p>
+                    <p className="text-[11px] text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
                 </div>
+                <span className="badge-blue text-[10px] shrink-0">Ready</span>
               </div>
             )}
 
             {error && (
-              <div className="flex items-center gap-2 text-[#dc2626] bg-red-50 p-3 rounded-lg mb-6 text-sm font-medium">
-                <AlertCircle className="w-5 h-5" />
-                {error}
+              <div className="flex items-start gap-2.5 text-red-700 bg-red-50 border border-red-200 p-3.5 rounded-xl text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
+                <span>{error}</span>
               </div>
             )}
 
-            <button 
+            <button
               onClick={handleUpload}
               disabled={uploading || !file}
-              className={`w-full py-3.5 rounded-xl font-semibold text-white shadow-md transition-all ${
-                uploading || !file ? 'bg-slate-300 cursor-not-allowed' : 'bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg cursor-pointer'
-              }`}
+              className="btn-primary w-full py-3 text-xs disabled:opacity-50"
             >
-              {uploading ? 'Uploading...' : 'Upload Resume'}
+              {uploading ? 'Analyzing Document Text...' : 'Analyze Resume'}
             </button>
-          </>
-        ) : (
-          <div className="py-10">
-            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-10 h-10 text-[#3B82F6]" />
+
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-center gap-4 text-[11px] text-slate-400">
+              <span className="flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" /> Private & User-Isolated
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <FileCheck className="w-3.5 h-3.5 text-slate-400" /> Instant Keyword Extraction
+              </span>
             </div>
-            <h2 className="text-2xl font-bold font-jakarta text-[#0F172A] mb-2">Upload Successful</h2>
-            <p className="text-[#64748B] mb-2">Filename: <span className="font-semibold text-[#0F172A]">{result.filename}</span></p>
-            <p className="text-[#64748B] mb-8">Status: <span className="font-semibold text-[#0F172A] capitalize">{result.status}</span></p>
-            
-            <button 
+          </div>
+        ) : (
+          <div className="py-6 text-center space-y-5 animate-fadeIn">
+            <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-8 h-8 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold font-jakarta text-slate-900">
+                Resume Processed Successfully
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Extracted text and parsed qualifications for <strong className="text-slate-800 font-semibold">{result.filename}</strong>.
+              </p>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 max-w-sm mx-auto text-xs text-slate-600 space-y-1">
+              <div className="flex justify-between">
+                <span>Document Status:</span>
+                <span className="font-semibold text-slate-900 capitalize">{result.status}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Document ID:</span>
+                <span className="font-mono text-slate-700">#{result.id}</span>
+              </div>
+            </div>
+
+            <button
               onClick={() => navigate(`/resume/analysis?resumeId=${result.id}`)}
-              className="px-8 py-3.5 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all cursor-pointer"
+              className="btn-primary px-6 py-2.5 text-xs mx-auto"
             >
-              Analyze Resume
+              <span>View Full ATS Diagnostic Report</span>
+              <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </button>
           </div>
         )}

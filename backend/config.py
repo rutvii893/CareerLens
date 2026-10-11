@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import Field, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent
 
 
 class Settings(BaseSettings):
-    database_url: PostgresDsn = 'postgresql://postgres:abtr@localhost:5432/careerlens'
+    database_url: Union[PostgresDsn, str] = 'postgresql://postgres:abtr@localhost:5432/careerlens'
     jwt_secret_key: str = 'a61aea93866c065cd93ea12a0a772e92882dd2e4f1f8d42af16a97c210c09b2a'
     jwt_algorithm: str = 'HS256'
     access_token_expire_minutes: int = 30

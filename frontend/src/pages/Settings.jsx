@@ -8,7 +8,6 @@ import {
   Save,
   Sliders,
   Sparkles,
-  Zap,
 } from 'lucide-react';
 import { userService } from '../services/userService';
 
@@ -66,55 +65,57 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div className="p-6 md:p-8 max-w-[800px] mx-auto w-full min-h-[50vh] flex flex-col items-center justify-center">
-        <LoaderCircle className="w-8 h-8 animate-spin text-[#2563eb] mb-3" />
-        <p className="text-slate-600 font-medium text-sm">Loading preferences...</p>
+      <div className="page-container min-h-[50vh] flex flex-col items-center justify-center">
+        <LoaderCircle className="w-8 h-8 animate-spin text-[#3B82F6] mb-3" />
+        <p className="text-sm font-medium text-slate-500 font-inter">Loading preferences...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-[800px] mx-auto w-full space-y-6">
+    <div className="page-container max-w-[800px] space-y-6">
       {/* Header */}
       <div>
-        <span className="px-2.5 py-0.5 bg-blue-50 text-[#2563eb] border border-blue-200/60 rounded-md text-xs font-bold uppercase tracking-wider">
-          Preferences
-        </span>
-        <h1 className="text-3xl font-extrabold font-jakarta text-slate-900 tracking-tight mt-1">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="badge-neutral text-[11px]">Configuration</span>
+          <span className="text-xs text-slate-400">• Workspace Preferences</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold font-jakarta text-slate-900 tracking-tight">
           Application Settings
         </h1>
-        <p className="text-slate-500 font-inter mt-1">
-          Customize default search filters, AI recommendations, and notification behavior.
+        <p className="text-xs sm:text-sm text-slate-500 font-inter mt-1">
+          Customize search regions, career intelligence context, and automatic skill match calculation.
         </p>
       </div>
 
       {successMsg && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 animate-fadeIn">
           <CheckCircle2 className="w-4 h-4 text-[#3B82F6] shrink-0" />
-          {successMsg}
+          <span>{successMsg}</span>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-2 animate-fadeIn">
           <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-          {error}
+          <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSave} className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+      <form onSubmit={handleSave} className="card-base p-6 sm:p-8 space-y-6">
         {/* Job Search Preferences */}
-        <div>
-          <h2 className="text-base font-bold font-jakarta text-[#0F172A] flex items-center gap-2 mb-1">
-            <Globe className="w-4 h-4 text-[#3B82F6]" /> Job Search Country
+        <div className="space-y-2">
+          <h2 className="text-sm font-bold font-jakarta text-slate-900 flex items-center gap-2">
+            <Globe className="w-4 h-4 text-blue-600" />
+            <span>Target Job Search Country</span>
           </h2>
-          <p className="text-xs text-slate-500 mb-3">
+          <p className="text-xs text-slate-500 font-inter">
             Sets the primary country region used when querying live vacancies from Adzuna.
           </p>
           <select
             value={preferences.defaultCountry}
             onChange={(e) => setPreferences({ ...preferences, defaultCountry: e.target.value })}
-            className="w-full max-w-sm px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-[#2563eb]"
+            className="w-full max-w-sm px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-500 mt-2"
           >
             {COUNTRIES.map((c) => (
               <option key={c.code} value={c.code}>
@@ -125,9 +126,10 @@ const Settings = () => {
         </div>
 
         {/* AI & Automation Toggles */}
-        <div className="pt-6 border-t border-slate-100 space-y-4">
-          <h2 className="text-base font-bold font-jakarta text-slate-900 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#7c3aed]" /> Intelligence & Automation
+        <div className="pt-5 border-t border-slate-100 space-y-4">
+          <h2 className="text-sm font-bold font-jakarta text-slate-900 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-violet-600" />
+            <span>Intelligence & Career Context</span>
           </h2>
 
           <label className="flex items-start gap-3 cursor-pointer">
@@ -135,12 +137,12 @@ const Settings = () => {
               type="checkbox"
               checked={preferences.enableAiSuggestions}
               onChange={(e) => setPreferences({ ...preferences, enableAiSuggestions: e.target.checked })}
-              className="mt-1 rounded text-[#2563eb] focus:ring-[#2563eb]"
+              className="mt-0.5 rounded text-blue-600 focus:ring-blue-500"
             />
-            <div>
-              <span className="text-sm font-bold text-slate-800 block">AI Career Coaching & Context</span>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Automatically supply your analyzed resume skills to Career Coach questions.
+            <div className="text-xs">
+              <span className="font-bold text-slate-800 block">AI Career Coaching Context</span>
+              <p className="text-slate-500 mt-0.5 font-inter">
+                Automatically supply your analyzed resume skills and target role to Career Coach questions.
               </p>
             </div>
           </label>
@@ -150,25 +152,25 @@ const Settings = () => {
               type="checkbox"
               checked={preferences.autoMatchJobs}
               onChange={(e) => setPreferences({ ...preferences, autoMatchJobs: e.target.checked })}
-              className="mt-1 rounded text-[#2563eb] focus:ring-[#2563eb]"
+              className="mt-0.5 rounded text-blue-600 focus:ring-blue-500"
             />
-            <div>
-              <span className="text-sm font-bold text-slate-800 block">Live Skill Match Calculation</span>
-              <p className="text-xs text-slate-500 mt-0.5">
+            <div className="text-xs">
+              <span className="font-bold text-slate-800 block">Automatic Job Matching</span>
+              <p className="text-slate-500 mt-0.5 font-inter">
                 Calculate transparent percentage overlap for all Adzuna job listings against your profile.
               </p>
             </div>
           </label>
         </div>
 
-        <div className="pt-6 border-t border-slate-100 flex justify-end">
+        <div className="pt-4 border-t border-slate-100 flex justify-end">
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-2.5 bg-[#2563eb] hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+            className="btn-primary text-xs disabled:opacity-50"
           >
-            {saving ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save Settings
+            {saving ? <LoaderCircle className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            <span>Save Settings</span>
           </button>
         </div>
       </form>
