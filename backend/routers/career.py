@@ -10,20 +10,12 @@ router = APIRouter(prefix='/career', tags=['career'])
 
 
 def _owned_resume(db: Session, resume_id: int | None, user_id: int) -> models.Resume | None:
-    if resume_id is None:
-        resume = db.scalar(
-            models.Resume.__table__.select().where(models.Resume.user_id == user_id).order_by(models.Resume.uploaded_at.desc()).limit(1)
-        )
-        if resume is None:
-            return None
-        return db.get(models.Resume, resume.id)
-    resume = crud.get_resume(db, resume_id)
-    if resume is None or resume.user_id != user_id:
-        # Fallback to latest resume if provided id doesn't match
-        return db.scalar(
-            models.Resume.__table__.select().where(models.Resume.user_id == user_id).order_by(models.Resume.uploaded_at.desc()).limit(1)
-        )
-    return resume
+    if resume_id is not None:
+        resume = crud.get_resume(db, resume_id)
+        if resume is not None and resume.user_id == user_id:
+            return resume
+    return crud.get_latest_resume(db, user_id)
+
 
 
 def _role(db: Session, request: schemas.CareerAnalyzeRequest) -> models.CareerRole:

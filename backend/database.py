@@ -11,6 +11,9 @@ if not DATABASE_URL.startswith('sqlite'):
     engine_kwargs.update({
         'pool_pre_ping': True,
         'pool_recycle': 300,
+        'pool_size': 10,
+        'max_overflow': 15,
+        'pool_timeout': 30,
     })
 
 engine = create_engine(DATABASE_URL, **engine_kwargs)
@@ -136,10 +139,22 @@ def ensure_db_defaults() -> None:
             "ALTER TABLE career_roadmaps ALTER COLUMN created_at SET DEFAULT now()",
             "ALTER TABLE career_roadmaps ALTER COLUMN updated_at SET DEFAULT now()",
         ])
+
+    # Performance indexes for user-scoped telemetry queries
+    index_statements = [
+        "CREATE INDEX IF NOT EXISTS ix_resumes_user_id ON resumes (user_id)",
+        "CREATE INDEX IF NOT EXISTS ix_ats_results_resume_id ON ats_results (resume_id)",
+        "CREATE INDEX IF NOT EXISTS ix_career_roadmaps_user_id ON career_roadmaps (user_id)",
+        "CREATE INDEX IF NOT EXISTS ix_interview_sessions_user_id ON interview_sessions (user_id)",
+        "CREATE INDEX IF NOT EXISTS ix_applications_user_id ON applications (user_id)",
+    ]
+    statements.extend(index_statements)
+
     with engine.begin() as connection:
         for stmt in statements:
             try:
                 connection.execute(text(stmt))
             except Exception:
                 pass
+
 

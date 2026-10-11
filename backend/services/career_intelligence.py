@@ -277,7 +277,14 @@ def _skill_key(skill: str) -> str:
     return ' '.join(skill.casefold().split())
 
 
+_ROLES_INITIALIZED = False
+_BENCHMARK_JOBS_INITIALIZED = False
+
+
 def ensure_default_roles(db: Session) -> None:
+    global _ROLES_INITIALIZED
+    if _ROLES_INITIALIZED:
+        return
     existing = {name.lower() for name in db.scalars(select(models.CareerRole.name)).all()}
     created = False
     for name, skills in DEFAULT_ROLE_PROFILES.items():
@@ -289,9 +296,13 @@ def ensure_default_roles(db: Session) -> None:
         created = True
     if created:
         db.commit()
+    _ROLES_INITIALIZED = True
 
 
 def ensure_default_benchmark_jobs(db: Session) -> None:
+    global _BENCHMARK_JOBS_INITIALIZED
+    if _BENCHMARK_JOBS_INITIALIZED:
+        return
     existing_titles = {t.lower() for t in db.scalars(select(models.Job.title)).all()}
     created = False
     for j_data in DEFAULT_BENCHMARK_JOBS:
@@ -308,6 +319,7 @@ def ensure_default_benchmark_jobs(db: Session) -> None:
         created = True
     if created:
         db.commit()
+    _BENCHMARK_JOBS_INITIALIZED = True
 
 
 def role_skills(role: models.CareerRole) -> list[str]:

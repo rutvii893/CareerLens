@@ -46,16 +46,8 @@ const InterviewPrep = () => {
   }, [globalTargetRole]);
 
   useEffect(() => {
-    userService.getDashboardMetrics()
-      .then((data) => {
-        if (data.active_resume_id && !resumeId) {
-          setResumeId(String(data.active_resume_id));
-        }
-      })
-      .catch(() => {});
-
     fetchHistory();
-  }, [globalTargetRole]);
+  }, []);
 
   const fetchHistory = async () => {
     try {

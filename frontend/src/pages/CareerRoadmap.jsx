@@ -46,7 +46,7 @@ const CareerRoadmap = () => {
   }, [globalTargetRole]);
 
   useEffect(() => {
-    // Load available roles from API
+    // Load available roles from API once
     careerService.getRoles()
       .then((roles) => {
         if (Array.isArray(roles)) {
@@ -55,18 +55,9 @@ const CareerRoadmap = () => {
       })
       .catch(() => {});
 
-    // Load active dashboard metrics to prefill target role & resume
-    userService.getDashboardMetrics()
-      .then((data) => {
-        if (data.active_resume_id && !resumeId) {
-          setResumeId(String(data.active_resume_id));
-        }
-        loadRoadmap(data.active_resume_id);
-      })
-      .catch(() => {
-        loadRoadmap();
-      });
-  }, [globalTargetRole]);
+    // Load roadmap directly using resumeId from params or active resume
+    loadRoadmap(resumeId ? Number(resumeId) : null);
+  }, []);
 
   const loadRoadmap = async (rId) => {
     const idToUse = rId || resumeId;

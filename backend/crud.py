@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from sqlalchemy import desc, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from . import models, schemas
 from .security import get_password_hash, verify_password
@@ -613,7 +613,12 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
 
     # Recommended Jobs based primarily on user's selected target role
     from .services.career_intelligence import evaluate_target_role_relevance
-    all_db_jobs = db.scalars(select(models.Job).order_by(models.Job.posted_at.desc())).all()
+    all_db_jobs = db.scalars(
+        select(models.Job)
+        .options(selectinload(models.Job.skills))
+        .order_by(models.Job.posted_at.desc())
+        .limit(25)
+    ).all()
     scored_role_jobs = []
 
     for j in all_db_jobs:

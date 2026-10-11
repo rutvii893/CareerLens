@@ -19,39 +19,20 @@ export const UserProvider = ({ children }) => {
     }
 
     try {
-      const [profileData, metricsData] = await Promise.allSettled([
-        userService.getProfile(),
-        userService.getDashboardMetrics(),
-      ]);
+      const profile = await userService.getProfile();
+      if (profile) {
+        setUser(profile);
+        const prefs = profile.preferences || {};
+        const canonicalRole = profile.target_role || prefs.target_role;
+        const canonicalScore = profile.target_score || prefs.target_score || 80;
 
-      let canonicalRole = null;
-      let canonicalScore = 80;
-
-      if (profileData.status === 'fulfilled' && profileData.value) {
-        setUser(profileData.value);
-        if (profileData.value.target_role) {
-          canonicalRole = profileData.value.target_role;
+        if (canonicalRole) {
+          setTargetRole(canonicalRole);
+          localStorage.setItem('cl_target_role', canonicalRole);
         }
-        if (profileData.value.target_score) {
-          canonicalScore = profileData.value.target_score;
-        }
+        setTargetScore(canonicalScore);
+        localStorage.setItem('cl_target_score', String(canonicalScore));
       }
-
-      if (metricsData.status === 'fulfilled' && metricsData.value) {
-        if (!canonicalRole && metricsData.value.target_role) {
-          canonicalRole = metricsData.value.target_role;
-        }
-        if (metricsData.value.target_score) {
-          canonicalScore = metricsData.value.target_score;
-        }
-      }
-
-      if (canonicalRole) {
-        setTargetRole(canonicalRole);
-        localStorage.setItem('cl_target_role', canonicalRole);
-      }
-      setTargetScore(canonicalScore);
-      localStorage.setItem('cl_target_score', String(canonicalScore));
     } catch (err) {
       console.warn('Could not sync user profile:', err);
     } finally {

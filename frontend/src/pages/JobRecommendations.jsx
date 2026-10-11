@@ -97,14 +97,7 @@ const JobRecommendations = () => {
   useEffect(() => {
     fetchLiveJobs(1);
     fetchSavedJobs();
-    userService.getDashboardMetrics()
-      .then((data) => {
-        if (data.active_resume_id && !internalResumeId) {
-          setInternalResumeId(String(data.active_resume_id));
-        }
-      })
-      .catch(() => {});
-  }, [globalTargetRole]);
+  }, []);
 
   const fetchLiveJobs = async (targetPage = 1) => {
     setLiveLoading(true);

@@ -79,7 +79,6 @@ const Dashboard = () => {
     setSavingGoal(true);
     try {
       await updateTargetGoal(targetRoleInput.trim());
-      await fetchDashboardData();
       setEditingGoal(false);
     } catch (err) {
       console.error('Failed to update target goal:', err);
