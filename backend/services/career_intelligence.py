@@ -285,41 +285,49 @@ def ensure_default_roles(db: Session) -> None:
     global _ROLES_INITIALIZED
     if _ROLES_INITIALIZED:
         return
-    existing = {name.lower() for name in db.scalars(select(models.CareerRole.name)).all()}
-    created = False
-    for name, skills in DEFAULT_ROLE_PROFILES.items():
-        if name.lower() in existing:
-            continue
-        role = models.CareerRole(name=name, description=f'Required skills for a {name} career path.')
-        role.skills = [models.CareerRoleSkill(skill_name=skill) for skill in skills]
-        db.add(role)
-        created = True
-    if created:
-        db.commit()
-    _ROLES_INITIALIZED = True
+    try:
+        existing = {name.lower() for name in db.scalars(select(models.CareerRole.name)).all()}
+        created = False
+        for name, skills in DEFAULT_ROLE_PROFILES.items():
+            if name.lower() in existing:
+                continue
+            role = models.CareerRole(name=name, description=f'Required skills for a {name} career path.')
+            role.skills = [models.CareerRoleSkill(skill_name=skill) for skill in skills]
+            db.add(role)
+            created = True
+        if created:
+            db.commit()
+        _ROLES_INITIALIZED = True
+    except Exception:
+        db.rollback()
+        raise
 
 
 def ensure_default_benchmark_jobs(db: Session) -> None:
     global _BENCHMARK_JOBS_INITIALIZED
     if _BENCHMARK_JOBS_INITIALIZED:
         return
-    existing_titles = {t.lower() for t in db.scalars(select(models.Job.title)).all()}
-    created = False
-    for j_data in DEFAULT_BENCHMARK_JOBS:
-        if j_data['title'].lower() in existing_titles:
-            continue
-        job = models.Job(
-            title=j_data['title'],
-            company=j_data['company'],
-            location=j_data['location'],
-            description=j_data['description'],
-        )
-        job.skills = [models.JobSkill(skill_name=s) for s in j_data['required_skills']]
-        db.add(job)
-        created = True
-    if created:
-        db.commit()
-    _BENCHMARK_JOBS_INITIALIZED = True
+    try:
+        existing_titles = {t.lower() for t in db.scalars(select(models.Job.title)).all()}
+        created = False
+        for j_data in DEFAULT_BENCHMARK_JOBS:
+            if j_data['title'].lower() in existing_titles:
+                continue
+            job = models.Job(
+                title=j_data['title'],
+                company=j_data['company'],
+                location=j_data['location'],
+                description=j_data['description'],
+            )
+            job.skills = [models.JobSkill(skill_name=s) for s in j_data['required_skills']]
+            db.add(job)
+            created = True
+        if created:
+            db.commit()
+        _BENCHMARK_JOBS_INITIALIZED = True
+    except Exception:
+        db.rollback()
+        raise
 
 
 def role_skills(role: models.CareerRole) -> list[str]:
@@ -339,8 +347,16 @@ def find_or_create_role(db: Session, role_id: int | None, target_role: str | Non
     if role:
         return role
 
-    # 2. Substring or keyword match
-    for existing_role in db.scalars(select(models.CareerRole)).all():
+    # 2. Check if it matches a known profile exactly
+    canonical_match = next((k for k in DEFAULT_ROLE_PROFILES if k.lower() == role_name.lower()), None)
+    if canonical_match:
+        role = db.scalar(select(models.CareerRole).where(models.CareerRole.name == canonical_match))
+        if role:
+            return role
+
+    # 3. Substring match against existing database roles
+    all_existing = db.scalars(select(models.CareerRole)).all()
+    for existing_role in all_existing:
         if existing_role.name.lower() in role_name.lower() or role_name.lower() in existing_role.name.lower():
             return existing_role
 

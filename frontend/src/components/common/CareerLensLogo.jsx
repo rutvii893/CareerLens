@@ -1,15 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import CareerLensLogoAsset from '../../assets/CareerLens Growth Vision Logo.png';
+import CareerLensLogoAsset from '../../assets/careerlens-logo.png';
 
 /**
  * CareerLensLogo - Reusable primary brand logo component.
  *
  * Props:
  * - variant: 'full' | 'icon' (default: 'full')
- * - size: 'navbar' | 'auth' | 'sidebar' | 'mobile' | 'custom' (default: 'navbar')
+ * - size: 'navbar' | 'auth' | 'sidebar' | 'mobile' | 'hero' | 'custom' (default: 'navbar')
  * - className: custom Tailwind classes
  * - to: link destination (default: '/')
+ * - clickable: whether the logo wraps in a Link (default: true)
  */
 const CareerLensLogo = ({
   variant = 'full',
@@ -18,48 +19,25 @@ const CareerLensLogo = ({
   to = '/',
   clickable = true,
 }) => {
-  // Height configurations for brand logo presentation
+  // Dimension configurations preserving square 1:1 aspect ratio
   const sizeClasses = {
-    navbar: 'h-10 sm:h-11 md:h-12',
-    mobile: 'h-8 sm:h-9',
-    auth: 'h-16 md:h-20',
-    sidebar: 'h-10 sm:h-11',
-    hero: 'h-20 md:h-24',
+    navbar: 'h-11 w-11 sm:h-12 sm:w-12',
+    mobile: 'h-9 w-9',
+    auth: 'h-24 w-24 sm:h-28 sm:w-28',
+    sidebar: 'h-10 w-10',
+    hero: 'h-24 w-24 md:h-28 md:w-28',
     custom: '',
   };
 
   const selectedSizeClass = sizeClasses[size] || sizeClasses.navbar;
   const logoSrc = CareerLensLogoAsset;
 
-  const getHeight = () => {
-    switch (size) {
-      case 'auth':
-        return '72px';
-      case 'hero':
-        return '88px';
-      case 'sidebar':
-        return '44px';
-      case 'mobile':
-        return '36px';
-      case 'navbar':
-      default:
-        return '46px';
-    }
-  };
-
-  const targetHeight = getHeight();
-
   const logoContent = (
     <div className={`inline-flex items-center shrink-0 ${className}`}>
       <img
         src={logoSrc}
-        alt="CareerLens Logo"
-        className={`w-auto object-contain shrink-0 transition-all duration-200 ${selectedSizeClass}`}
-        style={{
-          height: targetHeight,
-          maxHeight: targetHeight,
-          width: 'auto',
-        }}
+        alt="CareerLens"
+        className={`aspect-square object-contain shrink-0 bg-white ${selectedSizeClass}`}
       />
     </div>
   );

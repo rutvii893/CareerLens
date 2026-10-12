@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from . import models, schemas
@@ -458,8 +458,10 @@ def list_career_roles(db: Session) -> list[models.CareerRole]:
     return db.scalars(select(models.CareerRole).order_by(models.CareerRole.name)).all()
 
 
-def get_latest_career_roadmap(db: Session, user_id: int, resume_id: Optional[int] = None) -> Optional[models.CareerRoadmap]:
+def get_latest_career_roadmap(db: Session, user_id: int, resume_id: Optional[int] = None, target_role: Optional[str] = None) -> Optional[models.CareerRoadmap]:
     query = select(models.CareerRoadmap).where(models.CareerRoadmap.user_id == user_id)
+    if target_role:
+        query = query.where(func.lower(models.CareerRoadmap.target_role) == target_role.strip().lower())
     if resume_id is not None:
         query = query.where(models.CareerRoadmap.resume_id == resume_id)
     return db.scalar(query.order_by(desc(models.CareerRoadmap.updated_at)))
@@ -516,7 +518,7 @@ def save_interview_evaluation(db: Session, session: models.InterviewSession, que
     return session
 
 
-def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics:
+def get_dashboard_metrics(db: Session, user_id: int, target_role_override: Optional[str] = None) -> schemas.DashboardMetrics:
     user = get_user(db, user_id)
     latest_ats = get_latest_ats_result(db, user_id)
     resume = latest_ats.resume if latest_ats is not None else db.scalar(
@@ -535,13 +537,11 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
 
     # User target role & target score preferences
     prefs = dict(user.preferences or {}) if user else {}
-    target_role = user.target_role.strip() if (user and user.target_role and user.target_role.strip()) else 'Full Stack Engineer'
+    target_role = (target_role_override or (user.target_role if user and user.target_role else 'Full Stack Engineer')).strip()
     target_score = float(prefs.get('target_score', 80.0))
     skill_assessments = dict(prefs.get('skill_assessments') or {})
 
-    from .services.career_intelligence import ensure_default_benchmark_jobs, ensure_default_roles, find_or_create_role, role_skills, DEFAULT_ROLE_PROFILES
-    ensure_default_roles(db)
-    ensure_default_benchmark_jobs(db)
+    from .services.career_intelligence import find_or_create_role, role_skills, DEFAULT_ROLE_PROFILES
 
     # Determine required skills for target role
     role_obj = find_or_create_role(db, None, target_role)
@@ -600,7 +600,7 @@ def get_dashboard_metrics(db: Session, user_id: int) -> schemas.DashboardMetrics
     overall_skill_gap = round(sum(individual_gaps) / len(individual_gaps), 1) if individual_gaps else 0.0
 
     # Roadmap and Interview performance
-    roadmap = get_latest_career_roadmap(db, user_id, resume_id)
+    roadmap = get_latest_career_roadmap(db, user_id, resume_id, target_role=target_role)
     interviews = list_user_interview_sessions(db, user_id)
     scored_interviews = [session.score for session in interviews if session.score is not None]
     interview_average = round(sum(scored_interviews) / len(scored_interviews), 2) if scored_interviews else 0.0

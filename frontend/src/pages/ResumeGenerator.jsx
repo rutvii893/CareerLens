@@ -205,7 +205,7 @@ function ResumePaper({ resume, template = 'classic' }) {
           {(item.grade || item.coursework) && <div>{[item.grade, item.coursework].filter(Boolean).join(' | ')}</div>}
         </div>
       ))}</ResumeSection>}
-      {skills.length > 0 && <ResumeSection title="Technical Skills" template={template}>{skills.map((skill) => `${skill.name} (${skill.knowledge_percent}%)`).join(' • ')}</ResumeSection>}
+      {skills.length > 0 && <ResumeSection title="Technical Skills" template={template}>{skills.map((skill) => skill.name).join(' • ')}</ResumeSection>}
       {softSkills.length > 0 && <ResumeSection title="Soft Skills" template={template}>{softSkills.join(' • ')}</ResumeSection>}
       {projects.length > 0 && <ResumeSection title="Projects" template={template}>{projects.map((item, index) => (
         <div key={index} className="mb-3 last:mb-0">

@@ -114,15 +114,28 @@ def create_roadmap(request: schemas.CareerAnalyzeRequest, db: Session = Depends(
 
 
 @router.get('/roadmap', response_model=schemas.CareerRoadmapResponse)
-def get_roadmap(resumeId: int | None = None, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    stored = crud.get_latest_career_roadmap(db, current_user.id, resumeId)
+def get_roadmap(
+    resumeId: int | None = None,
+    targetRole: str | None = None,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    user_db = crud.get_user(db, current_user.id)
+    target_role_name = (targetRole or (user_db.target_role if user_db and user_db.target_role else 'Full Stack Engineer')).strip()
+    
+    # Check if a saved roadmap for this target_role already exists
+    stored = crud.get_latest_career_roadmap(db, current_user.id, resumeId, target_role=target_role_name)
     if stored is not None:
         return _format_roadmap_response(stored, db)
 
+    # Fallback to any latest roadmap if no specific role was requested and one exists
+    if not targetRole:
+        any_stored = crud.get_latest_career_roadmap(db, current_user.id, resumeId)
+        if any_stored is not None:
+            return _format_roadmap_response(any_stored, db)
+
     resume = _owned_resume(db, resumeId, current_user.id)
-    user_db = crud.get_user(db, current_user.id)
     custom_skills = list(user_db.custom_skills or []) if user_db else []
-    target_role_name = (user_db.target_role if user_db and user_db.target_role else 'Full Stack Engineer').strip()
 
     role = find_or_create_role(db, None, target_role_name)
     analysis = analyze_career_gap(resume, role, custom_skills)

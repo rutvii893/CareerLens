@@ -11,9 +11,13 @@ if not DATABASE_URL.startswith('sqlite'):
     engine_kwargs.update({
         'pool_pre_ping': True,
         'pool_recycle': 300,
-        'pool_size': 10,
-        'max_overflow': 15,
+        'pool_size': 5,
+        'max_overflow': 10,
         'pool_timeout': 30,
+        'connect_args': {
+            'connect_timeout': 15,
+            'options': '-c statement_timeout=30000',
+        },
     })
 
 engine = create_engine(DATABASE_URL, **engine_kwargs)
@@ -26,6 +30,13 @@ def ensure_interview_columns() -> None:
 
 
 def ensure_generated_resume_columns(target_engine=engine) -> None:
+    if target_engine.dialect.name == 'postgresql':
+        with target_engine.begin() as connection:
+            connection.execute(text(
+                "ALTER TABLE IF EXISTS generated_resumes ADD COLUMN IF NOT EXISTS template VARCHAR(32) NOT NULL DEFAULT 'classic'"
+            ))
+        return
+
     inspector = inspect(target_engine)
     if 'generated_resumes' not in inspector.get_table_names():
         return
@@ -37,7 +48,51 @@ def ensure_generated_resume_columns(target_engine=engine) -> None:
             ))
 
 
-def sync_database_schema() -> None:
+def sync_database_schema(force: bool = False) -> None:
+    """Sync schema columns efficiently. In PostgreSQL, uses fast batch DDL instead of 10+ round-trip inspections."""
+    if not force and not settings.auto_sync_db:
+        return
+
+    if engine.dialect.name == 'postgresql':
+        batch_ddl = """
+            ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS target_role VARCHAR(255) NULL;
+            ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS location VARCHAR(128) NULL;
+            ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS bio TEXT NULL;
+            ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS education VARCHAR(255) NULL;
+            ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS experience VARCHAR(255) NULL;
+            ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS custom_skills JSON NOT NULL DEFAULT '[]'::json;
+            ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS preferences JSON NOT NULL DEFAULT '{}'::json;
+
+            ALTER TABLE IF EXISTS ats_results ADD COLUMN IF NOT EXISTS extracted_skills JSON NOT NULL DEFAULT '[]'::json;
+            ALTER TABLE IF EXISTS ats_results ADD COLUMN IF NOT EXISTS missing_skills JSON NOT NULL DEFAULT '[]'::json;
+            ALTER TABLE IF EXISTS ats_results ADD COLUMN IF NOT EXISTS recommended_skills JSON NOT NULL DEFAULT '[]'::json;
+            ALTER TABLE IF EXISTS ats_results ADD COLUMN IF NOT EXISTS section_analysis JSON NOT NULL DEFAULT '{}'::json;
+            ALTER TABLE IF EXISTS ats_results ADD COLUMN IF NOT EXISTS embedding JSON NULL;
+            ALTER TABLE IF EXISTS ats_results ADD COLUMN IF NOT EXISTS embedding_model VARCHAR(128) NULL;
+
+            ALTER TABLE IF EXISTS jobs ADD COLUMN IF NOT EXISTS owner_user_id INTEGER NULL REFERENCES users(id) ON DELETE SET NULL;
+            ALTER TABLE IF EXISTS jobs ADD COLUMN IF NOT EXISTS required_skills JSON NOT NULL DEFAULT '[]'::json;
+            ALTER TABLE IF EXISTS jobs ADD COLUMN IF NOT EXISTS embedding JSON NULL;
+            ALTER TABLE IF EXISTS jobs ADD COLUMN IF NOT EXISTS embedding_model VARCHAR(128) NULL;
+
+            ALTER TABLE IF EXISTS interview_sessions ADD COLUMN IF NOT EXISTS answers JSON NOT NULL DEFAULT '[]'::json;
+
+            ALTER TABLE IF EXISTS applications ADD COLUMN IF NOT EXISTS job_title VARCHAR(255) NULL;
+            ALTER TABLE IF EXISTS applications ADD COLUMN IF NOT EXISTS company VARCHAR(255) NULL;
+            ALTER TABLE IF EXISTS applications ADD COLUMN IF NOT EXISTS location VARCHAR(128) NULL;
+            ALTER TABLE IF EXISTS applications ADD COLUMN IF NOT EXISTS redirect_url TEXT NULL;
+            ALTER TABLE IF EXISTS applications ADD COLUMN IF NOT EXISTS salary VARCHAR(128) NULL;
+            ALTER TABLE IF EXISTS applications ADD COLUMN IF NOT EXISTS matched_skills JSON NOT NULL DEFAULT '[]'::json;
+            ALTER TABLE IF EXISTS applications ADD COLUMN IF NOT EXISTS missing_skills JSON NOT NULL DEFAULT '[]'::json;
+            ALTER TABLE IF EXISTS applications ADD COLUMN IF NOT EXISTS match_score FLOAT NULL;
+
+            ALTER TABLE IF EXISTS generated_resumes ADD COLUMN IF NOT EXISTS template VARCHAR(32) NOT NULL DEFAULT 'classic';
+        """
+        with engine.begin() as connection:
+            connection.execute(text(batch_ddl))
+        return
+
+    # Fallback for non-Postgres (e.g. SQLite test runs)
     ensure_generated_resume_columns()
     insp = inspect(engine)
     tables = insp.get_table_names()
@@ -111,7 +166,38 @@ def sync_database_schema() -> None:
                 connection.execute(text("ALTER TABLE applications ADD COLUMN match_score FLOAT NULL"))
 
 
-def ensure_db_defaults() -> None:
+def ensure_db_defaults(force: bool = False) -> None:
+    """Ensure database defaults and indexes. In PostgreSQL, uses fast single-batch DDL."""
+    if not force and not settings.auto_sync_db:
+        return
+
+    if engine.dialect.name == 'postgresql':
+        batch_ddl = """
+            ALTER TABLE IF EXISTS users ALTER COLUMN created_at SET DEFAULT now();
+            ALTER TABLE IF EXISTS users ALTER COLUMN updated_at SET DEFAULT now();
+            ALTER TABLE IF EXISTS resumes ALTER COLUMN uploaded_at SET DEFAULT now();
+            ALTER TABLE IF EXISTS ats_results ALTER COLUMN created_at SET DEFAULT now();
+            ALTER TABLE IF EXISTS jobs ALTER COLUMN posted_at SET DEFAULT now();
+            ALTER TABLE IF EXISTS job_matches ALTER COLUMN created_at SET DEFAULT now();
+            ALTER TABLE IF EXISTS applications ALTER COLUMN applied_at SET DEFAULT now();
+            ALTER TABLE IF EXISTS interview_sessions ALTER COLUMN created_at SET DEFAULT now();
+            ALTER TABLE IF EXISTS interview_sessions ALTER COLUMN updated_at SET DEFAULT now();
+            ALTER TABLE IF EXISTS career_roadmaps ALTER COLUMN created_at SET DEFAULT now();
+            ALTER TABLE IF EXISTS career_roadmaps ALTER COLUMN updated_at SET DEFAULT now();
+
+            CREATE INDEX IF NOT EXISTS ix_resumes_user_id ON resumes (user_id);
+            CREATE INDEX IF NOT EXISTS ix_ats_results_resume_id ON ats_results (resume_id);
+            CREATE INDEX IF NOT EXISTS ix_career_roadmaps_user_id ON career_roadmaps (user_id);
+            CREATE INDEX IF NOT EXISTS ix_interview_sessions_user_id ON interview_sessions (user_id);
+            CREATE INDEX IF NOT EXISTS ix_applications_user_id ON applications (user_id);
+        """
+        try:
+            with engine.begin() as connection:
+                connection.execute(text(batch_ddl))
+        except Exception:
+            pass
+        return
+
     tables = inspect(engine).get_table_names()
     statements = []
     if 'users' in tables:
@@ -140,7 +226,6 @@ def ensure_db_defaults() -> None:
             "ALTER TABLE career_roadmaps ALTER COLUMN updated_at SET DEFAULT now()",
         ])
 
-    # Performance indexes for user-scoped telemetry queries
     index_statements = [
         "CREATE INDEX IF NOT EXISTS ix_resumes_user_id ON resumes (user_id)",
         "CREATE INDEX IF NOT EXISTS ix_ats_results_resume_id ON ats_results (resume_id)",

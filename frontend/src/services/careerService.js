@@ -5,8 +5,11 @@ export const careerService = {
     const response = await api.post('/career/analyze', { resume_id: resumeId || null, target_role: targetRole });
     return response.data;
   },
-  getRoadmap: async (resumeId) => {
-    const response = await api.get('/career/roadmap', { params: resumeId ? { resumeId } : {} });
+  getRoadmap: async (resumeId, targetRole = null) => {
+    const params = {};
+    if (resumeId) params.resumeId = resumeId;
+    if (targetRole) params.targetRole = targetRole;
+    const response = await api.get('/career/roadmap', { params });
     return response.data;
   },
   getRoles: async () => {

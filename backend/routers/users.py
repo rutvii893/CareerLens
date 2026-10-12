@@ -40,8 +40,12 @@ def update_me(updates: schemas.UserUpdate, db: Session = Depends(get_db), curren
 
 
 @router.get('/me/dashboard', response_model=schemas.DashboardMetrics)
-def get_dashboard(db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
-    return crud.get_dashboard_metrics(db, current_user.id)
+def get_dashboard(
+    targetRole: str | None = None,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserRead = Depends(get_current_user),
+):
+    return crud.get_dashboard_metrics(db, current_user.id, target_role_override=targetRole)
 
 
 @router.put('/me/target-goal', response_model=schemas.UserRead)
@@ -53,7 +57,11 @@ def update_target_goal(goal_in: schemas.TargetGoalUpdateRequest, db: Session = D
 
 
 @router.get('/me/skills', response_model=schemas.SkillsResponse)
-def get_user_skills(db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
+def get_user_skills(
+    targetRole: str | None = None,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserRead = Depends(get_current_user),
+):
     user_db = crud.get_user(db, current_user.id)
     latest_ats = crud.get_latest_ats_result(db, current_user.id)
     
@@ -62,7 +70,7 @@ def get_user_skills(db: Session = Depends(get_db), current_user: schemas.UserRea
     all_skills = list(dict.fromkeys(extracted + custom))
 
     prefs = dict(user_db.preferences or {}) if user_db else {}
-    target_role = user_db.target_role if (user_db and user_db.target_role) else 'Full Stack Engineer'
+    target_role = (targetRole or (user_db.target_role if user_db and user_db.target_role else 'Full Stack Engineer')).strip()
     target_score = float(prefs.get('target_score', 80.0))
     skill_assessments = dict(prefs.get('skill_assessments') or {})
 

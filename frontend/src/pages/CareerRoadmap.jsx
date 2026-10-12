@@ -40,7 +40,7 @@ const CareerRoadmap = () => {
   const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
-    if (globalTargetRole && (!targetRole || targetRole !== globalTargetRole)) {
+    if (globalTargetRole && targetRole !== globalTargetRole) {
       setTargetRole(globalTargetRole);
     }
   }, [globalTargetRole]);
@@ -54,17 +54,23 @@ const CareerRoadmap = () => {
         }
       })
       .catch(() => {});
-
-    // Load roadmap directly using resumeId from params or active resume
-    loadRoadmap(resumeId ? Number(resumeId) : null);
   }, []);
 
-  const loadRoadmap = async (rId) => {
+  useEffect(() => {
+    // Load roadmap whenever targetRole or resumeId changes
+    const roleToQuery = targetRole || globalTargetRole;
+    if (roleToQuery) {
+      loadRoadmap(resumeId ? Number(resumeId) : null, roleToQuery);
+    }
+  }, [targetRole, resumeId]);
+
+  const loadRoadmap = async (rId, roleName = null) => {
     const idToUse = rId || resumeId;
+    const roleToUse = roleName || targetRole || globalTargetRole;
     setLoading(true);
     setError('');
     try {
-      const data = await careerService.getRoadmap(idToUse ? Number(idToUse) : null);
+      const data = await careerService.getRoadmap(idToUse ? Number(idToUse) : null, roleToUse || null);
       setRoadmap(data);
       if (data.target_role || data.role?.name) {
         setTargetRole(data.target_role || data.role?.name);

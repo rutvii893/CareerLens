@@ -49,18 +49,45 @@ export const UserProvider = ({ children }) => {
     const trimmedRole = (newRole || '').trim();
     if (!trimmedRole) return;
 
+    const previousRole = targetRole;
+    const previousScore = targetScore;
+
     // 1. Optimistically update local state & storage
     setTargetRole(trimmedRole);
     setTargetScore(newScore);
     localStorage.setItem('cl_target_role', trimmedRole);
     localStorage.setItem('cl_target_score', String(newScore));
 
+    // Update current user state optimistically
+    setUser((prev) => prev ? {
+      ...prev,
+      target_role: trimmedRole,
+      preferences: { ...(prev.preferences || {}), target_role: trimmedRole, target_score: newScore },
+    } : prev);
+
     // 2. Persist to backend database
     try {
-      await userService.updateTargetGoal(trimmedRole, newScore);
+      const updatedUser = await userService.updateTargetGoal(trimmedRole, newScore);
+      if (updatedUser) {
+        setUser(updatedUser);
+      }
       // 3. Trigger global refetch so all subscribers update
       setRefreshIndex((prev) => prev + 1);
     } catch (err) {
+      // Rollback on failure
+      setTargetRole(previousRole);
+      setTargetScore(previousScore);
+      if (previousRole) {
+        localStorage.setItem('cl_target_role', previousRole);
+      } else {
+        localStorage.removeItem('cl_target_role');
+      }
+      localStorage.setItem('cl_target_score', String(previousScore));
+      setUser((prev) => prev ? {
+        ...prev,
+        target_role: previousRole,
+        preferences: { ...(prev.preferences || {}), target_role: previousRole, target_score: previousScore },
+      } : prev);
       console.error('Failed to update target goal in backend:', err);
       throw err;
     }

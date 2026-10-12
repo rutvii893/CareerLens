@@ -40,13 +40,13 @@ const Dashboard = () => {
   const [targetRoleInput, setTargetRoleInput] = useState(targetRole || 'Full Stack Engineer');
   const [savingGoal, setSavingGoal] = useState(false);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (roleToFetch = targetRole) => {
     setLoading(true);
     setError('');
     try {
       const [metricsRes, skillsRes] = await Promise.allSettled([
-        userService.getDashboardMetrics(),
-        userService.getSkills(),
+        userService.getDashboardMetrics(roleToFetch),
+        userService.getSkills(roleToFetch),
       ]);
 
       if (metricsRes.status === 'fulfilled') {
@@ -70,18 +70,24 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchDashboardData();
+    if (targetRole) {
+      setTargetRoleInput(targetRole);
+    }
+    fetchDashboardData(targetRole);
   }, [targetRole]);
 
   const handleSaveGoal = async (e) => {
     e?.preventDefault();
     if (!targetRoleInput.trim()) return;
     setSavingGoal(true);
+    setError('');
     try {
       await updateTargetGoal(targetRoleInput.trim());
       setEditingGoal(false);
     } catch (err) {
       console.error('Failed to update target goal:', err);
+      setError(err.response?.data?.detail || 'Failed to update target career goal. Restored previous selection.');
+      setTargetRoleInput(targetRole || 'Full Stack Engineer');
     } finally {
       setSavingGoal(false);
     }

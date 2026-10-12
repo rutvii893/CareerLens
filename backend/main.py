@@ -2,20 +2,39 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import sys
+from pathlib import Path
+
+# If executed directly without package context (e.g. `uvicorn main:app` inside backend/)
+if __package__ is None or __package__ == "":
+    parent_dir = Path(__file__).resolve().parent.parent
+    if str(parent_dir) not in sys.path:
+        sys.path.insert(0, str(parent_dir))
+    __package__ = "backend"
+
+from contextlib import asynccontextmanager
 from . import models
 from .config import settings
 from .database import SessionLocal, engine, ensure_db_defaults, ensure_interview_columns
 from .routers import auth, users, resumes, matching, career, interview, jobs, generated_resumes
 from .services.career_intelligence import ensure_default_roles
 
-models.Base.metadata.create_all(bind=engine)
-ensure_interview_columns()
-ensure_db_defaults()
 
-with SessionLocal() as startup_db:
-    ensure_default_roles(startup_db)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Safe, fast idempotent startup checks
+    try:
+        models.Base.metadata.create_all(bind=engine)
+        ensure_interview_columns()
+        ensure_db_defaults()
+        with SessionLocal() as startup_db:
+            ensure_default_roles(startup_db)
+    except Exception as exc:
+        print(f"[CareerLens Backend] Startup check warning: {exc}")
+    yield
 
-app = FastAPI(title='CareerLens Backend', version='0.1.0')
+
+app = FastAPI(title='CareerLens Backend', version='0.1.0', lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

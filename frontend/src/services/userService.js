@@ -9,12 +9,14 @@ export const userService = {
     const response = await api.put('/users/me', data);
     return response.data;
   },
-  getDashboardMetrics: async () => {
-    const response = await api.get('/users/me/dashboard');
+  getDashboardMetrics: async (targetRole = null) => {
+    const params = targetRole ? { targetRole } : {};
+    const response = await api.get('/users/me/dashboard', { params });
     return response.data;
   },
-  getSkills: async () => {
-    const response = await api.get('/users/me/skills');
+  getSkills: async (targetRole = null) => {
+    const params = targetRole ? { targetRole } : {};
+    const response = await api.get('/users/me/skills', { params });
     return response.data;
   },
   addCustomSkill: async (skillName, currentScore = null) => {

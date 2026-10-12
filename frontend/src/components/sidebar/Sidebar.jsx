@@ -15,6 +15,7 @@ import {
   Compass,
 } from 'lucide-react';
 import LineSidebar from '../common/LineSidebar';
+import CareerLensLogo from '../common/CareerLensLogo';
 
 const NAV_ITEMS = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -71,7 +72,8 @@ const Sidebar = ({ open = false, onClose }) => {
         }`}
       >
         {/* Top Sidebar Header */}
-        <div className="flex items-center justify-end md:hidden pb-2 mb-2 border-b border-slate-100">
+        <div className="flex items-center justify-between md:hidden pb-3 mb-2 border-b border-slate-100">
+          <CareerLensLogo variant="full" size="sidebar" />
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"

@@ -104,14 +104,27 @@ const CareerCoach = () => {
       .catch(() => {});
   }, []);
 
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const scrollAreaRef = useRef(null);
+
+  const handleScroll = () => {
+    if (!scrollAreaRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+    setIsNearBottom(scrollHeight - scrollTop - clientHeight < 80);
+  };
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatHistory, loading]);
+    if (isNearBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatHistory, loading, isNearBottom]);
 
   const handleAsk = async (promptText) => {
     const q = promptText || question;
-    if (!q.trim() || q.trim().length < 3) {
-      setError('Please enter a question with at least 3 characters.');
+    if (!q.trim() || q.trim().length < 3 || loading) {
+      if (!q.trim() || q.trim().length < 3) {
+        setError('Please enter a question with at least 3 characters.');
+      }
       return;
     }
 
@@ -123,7 +136,6 @@ const CareerCoach = () => {
     setError('');
 
     try {
-      // Send conversation history to preserve memory
       const historyPayload = updatedHistory.slice(-8).map((m) => ({
         sender: m.sender,
         text: m.text,
@@ -152,8 +164,10 @@ const CareerCoach = () => {
       setError(detail);
       const errorMessage = {
         sender: 'coach',
-        text: `**Career Coach Notice**: Unable to complete request at this time.\n\n*Reason*: ${detail}`,
+        text: `Unable to complete request at this time.\n\n*Error*: ${detail}`,
         isError: true,
+        canRetry: true,
+        failedPrompt: q.trim(),
         timestamp: new Date(),
       };
       setChatHistory((prev) => [...prev, errorMessage]);
@@ -175,37 +189,39 @@ const CareerCoach = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)] max-w-[1100px] mx-auto w-full p-4 sm:p-6 space-y-4 animate-fadeIn">
+    <div className="flex flex-col h-[calc(100vh-5.5rem)] max-w-5xl mx-auto w-full p-3 sm:p-5 space-y-3.5 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 bg-orange-50 text-[#e26d3d] border border-orange-200/60 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> AI Career Coach
+            <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/80 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> AI Career Coach
             </span>
+            <span className="text-xs text-slate-400">• Role-calibrated mentorship</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold font-jakarta text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-extrabold font-jakarta text-slate-900 tracking-tight">
             Personalized Career Guidance
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-inter mt-0.5">
-            Contextual career intelligence powered by verified skills, target role benchmarks, and roadmaps.
+            Targeting <span className="font-semibold text-slate-800">{targetRole || 'your target role'}</span> with verified competencies and milestone insights.
           </p>
         </div>
 
         {chatHistory.length > 0 && (
           <button
             onClick={handleClearChat}
-            className="self-start sm:self-auto px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+            disabled={loading}
+            className="self-start sm:self-auto px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-semibold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
           >
-            <Trash2 className="w-3.5 h-3.5" /> Clear Chat
+            <Trash2 className="w-3.5 h-3.5 text-slate-400" /> Clear Chat
           </button>
         )}
       </div>
 
       {/* Target Role & Resume Context Bar */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
+      <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-700 shrink-0">
-          <Target className="w-4 h-4 text-[#2563eb]" /> Active Context:
+          <Target className="w-4 h-4 text-blue-600" /> Active Context:
         </div>
         <div className="flex flex-1 flex-col sm:flex-row gap-2 w-full">
           <input
@@ -218,45 +234,49 @@ const CareerCoach = () => {
               }
             }}
             placeholder="Target role (e.g. Data Engineer, Backend Developer)"
-            className="flex-1 px-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#2563eb] focus:bg-white transition-all"
+            className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
           />
           <input
             type="number"
             value={resumeId}
             onChange={(e) => setResumeId(e.target.value)}
             placeholder="Resume ID (optional)"
-            className="sm:w-36 px-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#2563eb] focus:bg-white transition-all"
+            className="sm:w-36 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
           />
         </div>
       </div>
 
       {/* Main Chat Box Container */}
-      <div className="flex-1 min-h-0 bg-white rounded-3xl border border-slate-200/90 shadow-sm flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 bg-white rounded-3xl border border-slate-200/90 shadow-xs flex flex-col overflow-hidden">
         {/* Messages Scroll Area */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
+        <div
+          ref={scrollAreaRef}
+          onScroll={handleScroll}
+          className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4"
+        >
           {chatHistory.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563eb] flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-3">
                 <Bot className="w-6 h-6" />
               </div>
               <h3 className="text-base font-bold font-jakarta text-slate-800">
-                How can I assist your career navigation today?
+                How can I assist your career progression today?
               </h3>
               <p className="text-xs text-slate-500 mt-1 max-w-md">
-                Ask about system design strategy, role suitability comparisons, ATS resume optimization, or next skills to learn for <span className="font-semibold text-slate-700">{targetRole || 'your target role'}</span>.
+                Get specific advice on architectural interview topics, resume phrasing, job qualifications, or skill gaps for <span className="font-semibold text-slate-700">{targetRole || 'your chosen path'}</span>.
               </p>
 
               {/* Prompt Suggestions */}
               <div className="mt-6 w-full max-w-xl space-y-2 text-left">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" /> Suggested Inquiries:
+                  <Lightbulb className="w-3.5 h-3.5 text-blue-600" /> Suggested Inquiries:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {SUGGESTED_PROMPTS.map((prompt, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleAsk(prompt)}
-                      className="p-3 bg-slate-50 hover:bg-blue-50/70 border border-slate-200/80 hover:border-blue-200 text-left text-xs font-medium text-slate-700 hover:text-[#2563eb] rounded-xl transition-all shadow-2xs cursor-pointer"
+                      className="p-3 bg-slate-50 hover:bg-blue-50/70 border border-slate-200/80 hover:border-blue-200 text-left text-xs font-medium text-slate-700 hover:text-blue-700 rounded-xl transition-all shadow-2xs cursor-pointer"
                     >
                       &ldquo;{prompt}&rdquo;
                     </button>
@@ -271,24 +291,24 @@ const CareerCoach = () => {
                 className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
               >
                 {msg.sender === 'coach' && (
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#2563eb] to-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
                     <Bot className="w-4 h-4" />
                   </div>
                 )}
 
                 <div
-                  className={`max-w-[88%] sm:max-w-[80%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
+                  className={`max-w-[88%] sm:max-w-[78%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
                     msg.sender === 'user'
-                      ? 'bg-[#2563eb] text-white rounded-br-xs shadow-xs'
+                      ? 'bg-blue-600 text-white rounded-br-xs shadow-2xs'
                       : msg.isError
                       ? 'bg-red-50 text-red-900 border border-red-200 rounded-bl-xs'
-                      : 'bg-slate-50 text-slate-800 border border-slate-200/80 rounded-bl-xs'
+                      : 'bg-slate-50/90 text-slate-800 border border-slate-200/80 rounded-bl-xs'
                   }`}
                 >
                   {msg.sender === 'coach' && !msg.isError && (
                     <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-200/60 text-xs">
                       <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-[#2563eb]" /> CareerLens AI Coach
+                        <Sparkles className="w-3.5 h-3.5 text-blue-600" /> Career Coach
                       </span>
                       <span className="px-2 py-0.5 bg-white text-slate-500 rounded text-[10px] font-semibold border border-slate-200 uppercase tracking-wider">
                         {msg.provider === 'gemini' ? 'Gemini AI' : 'Career Intelligence'}
@@ -302,12 +322,25 @@ const CareerCoach = () => {
                     <MarkdownRenderer content={msg.text} />
                   )}
 
+                  {msg.isError && msg.canRetry && (
+                    <div className="mt-3 pt-2 border-t border-red-200 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleAsk(msg.failedPrompt)}
+                        disabled={loading}
+                        className="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        <RefreshCw className="w-3 h-3" /> Retry Prompt
+                      </button>
+                    </div>
+                  )}
+
                   {msg.missingSkills?.length > 0 && (
                     <div className="mt-3 pt-2.5 border-t border-slate-200/60 text-xs">
-                      <span className="font-bold text-amber-800 block mb-1">Identified Role Skill Gaps:</span>
+                      <span className="font-bold text-slate-700 block mb-1">Identified Competency Gaps:</span>
                       <div className="flex flex-wrap gap-1">
                         {msg.missingSkills.map((s) => (
-                          <span key={s} className="px-2 py-0.5 bg-amber-50 text-amber-800 rounded-md border border-amber-200 text-[10px] font-semibold">
+                          <span key={s} className="px-2 py-0.5 bg-blue-50 text-blue-800 rounded-md border border-blue-200 text-[10px] font-semibold">
                             {s}
                           </span>
                         ))}
@@ -327,11 +360,11 @@ const CareerCoach = () => {
 
           {loading && (
             <div className="flex gap-3 items-center text-slate-500 text-xs font-medium animate-fadeIn">
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center shrink-0 animate-pulse">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 animate-pulse border border-blue-100">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl shadow-xs">
-                <LoaderCircle className="w-4 h-4 animate-spin text-[#2563eb]" />
+              <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl shadow-2xs">
+                <LoaderCircle className="w-4 h-4 animate-spin text-blue-600" />
                 <span>Formulating personalized career response...</span>
               </div>
             </div>
@@ -341,44 +374,52 @@ const CareerCoach = () => {
         </div>
 
         {error && (
-          <div className="mx-4 sm:mx-6 mb-2 bg-red-50 border border-red-200 text-red-800 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 shrink-0">
-            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-            {error}
+          <div className="mx-4 sm:mx-6 mb-2 bg-red-50 border border-red-200 text-red-800 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button
+              onClick={() => setError('')}
+              className="text-red-600 hover:text-red-800 font-bold text-xs"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
-        {/* Composer Input Area (Always Pinned at Bottom) */}
-        <div className="p-3 sm:p-4 bg-slate-50/70 border-t border-slate-200/80 shrink-0">
+        {/* Composer Input Area */}
+        <div className="p-3 sm:p-4 bg-slate-50/80 border-t border-slate-200/80 shrink-0">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleAsk();
             }}
-            className="flex items-center gap-2"
+            className="flex items-end gap-2.5"
           >
             <div className="flex-1 relative">
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
+                rows={1}
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about system design, job fit, skill gaps, or interview strategy..."
                 disabled={loading}
-                className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#2563eb] shadow-xs disabled:opacity-60 transition-all"
+                className="w-full pl-4 pr-3 py-2.5 sm:py-3 bg-white border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs disabled:opacity-60 transition-all resize-none max-h-32 leading-relaxed"
               />
             </div>
             <button
               type="submit"
               disabled={loading || !question.trim()}
-              className="px-5 py-3 bg-gradient-to-r from-[#2563eb] to-[#7c3aed] hover:opacity-95 disabled:opacity-50 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-xs flex items-center gap-2 shrink-0 cursor-pointer"
+              className="px-4 sm:px-5 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-2xs flex items-center gap-2 shrink-0 cursor-pointer h-[42px] sm:h-[46px]"
             >
               {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               <span className="hidden sm:inline">Ask Coach</span>
             </button>
           </form>
           <div className="mt-1.5 px-1 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Press Enter to send • Shift+Enter for multiline</span>
+            <span>Press Enter to send • Shift+Enter for new line</span>
             <span>Target Role: <strong className="text-slate-600 font-semibold">{targetRole || 'Not Selected'}</strong></span>
           </div>
         </div>
@@ -388,3 +429,4 @@ const CareerCoach = () => {
 };
 
 export default CareerCoach;
+
